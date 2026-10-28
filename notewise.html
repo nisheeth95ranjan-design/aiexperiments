@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoteWise — Music Theory</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c28; --border:#2a2a3a;
+    --accent:#f0c040; --accent2:#e07060; --accent3:#60b0e0;
+    --text:#f0eee8; --muted:#888899;
+    --white-key:#f5f0e8; --black-key:#1a1a22;
+    --c-note:#f0c040; --d-note:#e07060; --e-note:#d060b0;
+    --f-note:#60b0e0; --g-note:#60d090; --a-note:#e09040; --b-note:#a080e0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;
+    background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(240,192,64,.07) 0%,transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 80%,rgba(96,176,224,.06) 0%,transparent 60%),
+      radial-gradient(ellipse 40% 40% at 60% 30%,rgba(224,112,96,.04) 0%,transparent 50%);
+    pointer-events:none;}
+  #app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:20px 16px;}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+  .logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;letter-spacing:-.5px;}
+  .logo span{color:var(--accent);font-style:italic;}
+  .tagline{font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;text-transform:uppercase;}
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  .level-badge{font-family:'Space Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;}
+  .level-badge b{color:var(--accent);font-weight:700;}
+  .xp-bar-wrap{display:flex;align-items:center;gap:12px;}
+  .xp-label{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);}
+  .xp-bar{width:140px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+  .xp-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+  .streak-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.3);color:var(--accent);border-radius:20px;padding:4px 12px;font-size:12px;font-family:'Space Mono',monospace;}
+  .next-step{font-size:13px;color:var(--muted);margin-bottom:22px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .next-step b{color:var(--accent3);font-weight:500;}
+
+  .nav-tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border-radius:12px;padding:4px;border:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+  .nav-tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{flex:1;padding:10px 12px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:9px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .tab-btn.active{background:var(--surface2);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .tab-btn:hover:not(.active){color:var(--text);background:rgba(255,255,255,.04);}
+
+  .section{display:none;animation:fadeIn .3s ease;}
+  .section.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .section-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;margin-bottom:6px;}
+  .section-title em{color:var(--accent);font-style:italic;}
+  .section-sub{color:var(--muted);font-size:14px;margin-bottom:24px;line-height:1.8;}
+  .kbd{background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:12px;border:1px solid var(--border);font-family:'Space Mono',monospace;color:var(--text);}
+  .sec-label{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+
+  /* Controls */
+  .controls-row{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;margin-bottom:16px;font-size:13px;color:var(--muted);}
+  .toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+  .toggle input{accent-color:var(--accent);cursor:pointer;}
+  .sel{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;}
+  input[type=range]{accent-color:var(--accent);width:100px;cursor:pointer;}
+
+  /* Piano */
+  .piano-wrap{background:var(--surface);border-radius:16px;padding:24px;border:1px solid var(--border);margin-bottom:20px;overflow-x:auto;}
+  .piano{display:flex;position:relative;margin:0 auto;user-select:none;touch-action:manipulation;}
+  .key{position:relative;cursor:pointer;border-radius:0 0 8px 8px;transition:transform .07s,filter .07s,background .15s;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;padding-bottom:8px;}
+  .key.pressed{transform:scaleY(.97);filter:brightness(.82);}
+  .key.white{background:var(--white-key);border:1px solid #ccc;margin-right:1px;z-index:1;font-family:'Space Mono',monospace;font-size:10px;color:#666;flex-shrink:0;}
+  .key.black{background:var(--black-key);position:absolute;z-index:2;top:0;font-family:'Space Mono',monospace;font-size:9px;color:#888;border:1px solid #000;}
+  .key.white.highlighted{background:var(--accent);color:#333;}
+  .key.black.highlighted{background:#b89030;color:#fff;}
+  .key[data-note="C"].white.highlighted{background:var(--c-note);}
+  .key[data-note="D"].white.highlighted{background:var(--d-note);}
+  .key[data-note="E"].white.highlighted{background:var(--e-note);}
+  .key[data-note="F"].white.highlighted{background:var(--f-note);}
+  .key[data-note="G"].white.highlighted{background:var(--g-note);}
+  .key[data-note="A"].white.highlighted{background:var(--a-note);}
+  .key[data-note="B"].white.highlighted{background:var(--b-note);}
+  .key.root{box-shadow:inset 0 0 0 3px rgba(255,255,255,.9);}
+  .key-label{font-size:10px;pointer-events:none;}
+  .key.black .key-label{font-size:8px;color:#999;}
+  .key.black.highlighted .key-label{color:#fff;}
+  .kchip{font-family:'Space Mono',monospace;font-size:9px;padding:1px 4px;border-radius:4px;background:rgba(0,0,0,.08);color:#555;pointer-events:none;}
+  .key.black .kchip{background:rgba(255,255,255,.12);color:#ccc;}
+  .deg{position:absolute;top:8px;left:0;right:0;text-align:center;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:rgba(0,0,0,.6);pointer-events:none;}
+  .key.black .deg{color:#fff;top:6px;font-size:9px;}
+  .piano.hide-names .lbl-name{visibility:hidden;}
+  .piano.hide-chars .lbl-char{display:none;}
+
+  /* Keyboard map */
+  .kb-key{width:44px;height:44px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Space Mono',monospace;cursor:pointer;transition:all .12s;border:1px solid #444;gap:2px;user-select:none;}
+  .kb-key.kb-white{background:var(--white-key);color:#333;border-color:#bbb;}
+  .kb-key.kb-black{background:var(--black-key);color:#aaa;border-color:#555;}
+  .kb-key.kb-in{box-shadow:0 0 0 2px var(--accent3);}
+  .kb-key:active,.kb-key.kb-lit{background:rgba(240,192,64,.2)!important;border-color:var(--accent)!important;color:var(--accent)!important;transform:scale(.93);}
+  .kb-char{font-size:15px;font-weight:700;line-height:1;}
+  .kb-note{font-size:9px;opacity:.75;line-height:1;}
+  .kb-key.kb-white .kb-note{color:#666;}
+  .kb-key.kb-black .kb-note{color:#aaa;}
+  .legend{margin-top:14px;display:flex;gap:20px;flex-wrap:wrap;}
+  .legend div{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+  .legend i{width:22px;height:22px;border-radius:4px;display:inline-block;}
+
+  /* History strip */
+  .history{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;}
+  .hist-l{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-right:8px;}
+  .hist-int{color:var(--accent3);font-weight:500;}
+  .hist-notes{display:inline-flex;gap:6px;flex-wrap:wrap;vertical-align:middle;}
+  .hn{font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);}
+  .hn:last-child{border-color:var(--accent);color:var(--accent);}
+
+  /* Note info */
+  .note-info{background:var(--surface2);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+  .note-big{font-family:'Playfair Display',serif;font-size:64px;font-weight:900;color:var(--accent);line-height:1;min-width:90px;}
+  .note-big sub{font-size:22px;font-family:'Space Mono',monospace;font-weight:400;color:var(--muted);}
+  .note-details{flex:1;min-width:220px;}
+  .note-details h3{font-size:18px;margin-bottom:6px;}
+  .note-details p{color:var(--muted);font-size:13px;line-height:1.7;}
+  .note-freq{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent3);margin-top:6px;}
+  .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:14px;}
+  .fact{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
+  .fact-l{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-family:'Space Mono',monospace;}
+  .fact-v{font-size:13px;margin-top:3px;}
+  .scale-notes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center;}
+  .scale-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;font-family:'Space Mono',monospace;border:1px solid var(--border);cursor:pointer;transition:all .15s;background:var(--surface);color:var(--text);}
+  .scale-pill:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4);}
+  .scale-pill.active-pill{border-color:var(--accent);color:var(--accent);}
+  .pill-deg{font-size:9px;opacity:.55;margin-left:4px;}
+  .pill-lead{font-size:12px;color:var(--muted);}
+  .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .mini-btn{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .mini-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  .mini-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .mini-btn.primary{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600;}
+  .mini-btn.primary:hover{color:#111;filter:brightness(1.08);}
+
+  /* Panels / mini piano */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:24px;}
+  .panel h3{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:2px;}
+  .panel h4{font-size:15px;font-weight:600;margin-bottom:4px;}
+  .panel .mood{color:var(--muted);font-size:13px;}
+  .tip{font-size:13px;color:var(--muted);line-height:1.7;margin-top:14px;padding-left:12px;border-left:2px solid var(--accent3);}
+  .mini-wrap{overflow-x:auto;margin-top:14px;padding-bottom:4px;}
+  .mini-piano{position:relative;height:80px;}
+  .mk{position:absolute;top:0;border-radius:0 0 5px 5px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-family:'Space Mono',monospace;font-size:8px;}
+  .mw{background:var(--white-key);height:80px;color:#333;z-index:1;}
+  .mb{background:var(--black-key);height:50px;z-index:2;color:#fff;border:1px solid #333;}
+  .mw.on{background:var(--accent);}
+  .mb.on{background:#b89030;}
+  .mk.rt{background:var(--accent2);color:#fff;}
+
+  /* Scales & chords */
+  .scale-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-bottom:24px;}
+  .scale-card{background:var(--surface);border-radius:12px;padding:20px;border:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+  .scale-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-accent,var(--accent));}
+  .scale-card:hover{border-color:var(--card-accent,var(--accent));transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .scale-card.selected{border-color:var(--card-accent,var(--accent));box-shadow:inset 0 0 0 1px var(--card-accent,var(--accent));}
+  .scale-card h3{font-size:16px;font-weight:600;margin-bottom:4px;}
+  .scale-card .mood{font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .card-meta{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:12px;line-height:1.8;}
+  .card-meta b{color:var(--text);font-weight:400;}
+  .scale-selector{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+  .root-btn{width:42px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s;}
+  .root-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .root-btn.active{background:var(--accent);color:#111;border-color:var(--accent);font-weight:700;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+  .dchip{min-width:88px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;text-align:center;transition:all .15s;color:var(--text);font-family:inherit;}
+  .dchip .num{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent);}
+  .dchip .nm{font-family:'Space Mono',monospace;font-size:12px;}
+  .dchip .fn{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3;}
+  .dchip:hover,.dchip.playing{border-color:var(--accent);transform:translateY(-2px);}
+  .dchip.playing{background:rgba(240,192,64,.15);}
+  .prog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:14px;}
+  .prog-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;}
+  .prog-card:hover{border-color:var(--accent3);transform:translateY(-2px);}
+  .prog-card h4{font-size:14px;margin-bottom:4px;}
+  .prog-chords{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .prog-chords span{font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);transition:all .15s;}
+  .prog-chords span.on{background:var(--accent);color:#111;border-color:var(--accent);}
+  .prog-card p{font-size:12px;color:var(--muted);line-height:1.6;}
+
+  /* Ear training */
+  .ear-container{max-width:640px;margin:0 auto;text-align:center;}
+  .ear-status{background:var(--surface);border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:20px;}
+  .ear-emoji{font-size:44px;margin-bottom:10px;}
+  .ear-prompt{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:8px;}
+  .ear-sub{color:var(--muted);font-size:14px;line-height:1.6;}
+  .play-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#111;border:none;padding:14px 30px;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+  .play-btn:hover{transform:scale(1.04);box-shadow:0 8px 24px rgba(240,192,64,.3);}
+  .play-btn:active{transform:scale(.98);}
+  .ghost-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--text);border:1px solid var(--border);padding:13px 22px;border-radius:50px;font-size:14px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+  .ghost-btn:hover:not(:disabled){border-color:var(--accent3);color:var(--accent3);}
+  .ghost-btn:disabled{opacity:.35;cursor:not-allowed;}
+  .ear-tools{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;}
+  .choices-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .choice-btn{padding:14px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;cursor:pointer;transition:all .15s;}
+  .choice-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);transform:translateY(-2px);}
+  .choice-btn.correct{background:#1a3a1a;border-color:#60d090;color:#60d090;}
+  .choice-btn.wrong{background:#3a1a1a;border-color:#e07060;color:#e07060;}
+  .choice-btn:disabled{cursor:not-allowed;opacity:.8;}
+  .feedback-msg{font-size:14px;color:var(--muted);min-height:20px;margin-bottom:12px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;}
+  .feedback-msg.correct-fb{color:#60d090;}
+  .feedback-msg.wrong-fb{color:#e07060;}
+  .explain{font-size:13px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;text-align:left;line-height:1.7;}
+  .explain.show{display:block;}
+  .explain b{color:var(--text);font-weight:500;}
+  .score-display{display:flex;justify-content:center;gap:24px;background:var(--surface2);border-radius:10px;padding:12px 24px;border:1px solid var(--border);flex-wrap:wrap;}
+  .score-item{text-align:center;}
+  .score-num{font-family:'Space Mono',monospace;font-size:24px;color:var(--accent);font-weight:700;}
+  .score-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .ear-mode-tabs,.diff-row{display:flex;gap:8px;margin-bottom:14px;justify-content:center;flex-wrap:wrap;}
+  .emode-btn,.diff-btn{padding:8px 18px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;}
+  .emode-btn.active{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600;}
+  .diff-btn{font-size:12px;padding:6px 14px;}
+  .diff-btn.active{background:var(--accent3);color:#111;border-color:var(--accent3);font-weight:600;}
+  .diff-btn .rec{color:var(--accent);margin-left:4px;}
+  .diff-btn.active .rec{color:#111;}
+  .shortcut{font-size:11px;color:var(--muted);margin-top:16px;font-family:'Space Mono',monospace;}
+  .waveform{display:flex;align-items:center;gap:3px;height:32px;margin:0 auto 12px;justify-content:center;}
+  .wave-bar{width:4px;border-radius:2px;background:var(--accent);animation:wave 1s ease-in-out infinite;opacity:.15;height:6px;}
+  .wave-bar.playing{opacity:1;}
+  @keyframes wave{0%,100%{height:6px}50%{height:28px}}
+  .wave-bar:nth-child(1){animation-delay:0s}.wave-bar:nth-child(2){animation-delay:.1s}
+  .wave-bar:nth-child(3){animation-delay:.2s}.wave-bar:nth-child(4){animation-delay:.3s}
+  .wave-bar:nth-child(5){animation-delay:.2s}.wave-bar:nth-child(6){animation-delay:.1s}
+  .wave-bar:nth-child(7){animation-delay:0s}
+
+  /* Quiz */
+  .quiz-wrap{max-width:640px;margin:0 auto;}
+  .quiz-card{background:var(--surface);border-radius:16px;padding:32px;border:1px solid var(--border);margin-bottom:20px;text-align:center;}
+  .quiz-q{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:6px;line-height:1.4;}
+  .quiz-hint{color:var(--muted);font-size:13px;margin-bottom:24px;}
+  .quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .quiz-opt{padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
+  .quiz-opt:hover:not(:disabled){border-color:var(--accent3);transform:translateY(-2px);}
+  .quiz-opt.correct{background:#1a3a1a;border-color:#60d090;color:#60d090;}
+  .quiz-opt.wrong{background:#3a1a1a;border-color:#e07060;color:#e07060;}
+  .quiz-opt:disabled{cursor:default;}
+  .quiz-progress{display:flex;gap:4px;margin-bottom:20px;}
+  .qp-dot{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background .3s;}
+  .qp-dot.current{background:var(--accent2);}
+  .next-btn{padding:12px 28px;border-radius:50px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:none;}
+  .next-btn.show{display:inline-block;}
+  .next-btn:hover{background:var(--accent);color:#111;}
+
+  /* Theory */
+  .theory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+  .theory-card{background:var(--surface);border-radius:12px;padding:20px;border:1px solid var(--border);}
+  .theory-card h3{font-size:15px;font-weight:600;margin-bottom:8px;color:var(--accent);}
+  .theory-card p,.theory-card li{font-size:13px;color:var(--muted);line-height:1.8;}
+  .theory-card p+p{margin-top:8px;}
+  .theory-card strong{color:var(--text);font-weight:500;}
+  .theory-card ul,.theory-card ol{padding-left:18px;}
+  .theory-card .mono{font-family:'Space Mono',monospace;color:var(--accent3);}
+  .theory-card .mini-btn{margin-top:12px;margin-right:6px;}
+  .interval-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .interval-table th{text-align:left;padding:6px 8px;color:var(--accent);font-family:'Space Mono',monospace;border-bottom:1px solid var(--border);}
+  .interval-table td{padding:5px 8px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.04);}
+  .interval-table tr[data-demo]{cursor:pointer;}
+  .interval-table tr[data-demo]:hover td{color:var(--text);background:rgba(255,255,255,.03);}
+  .interval-table .pl{color:var(--accent3);}
+  .mode-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .mode-btns .mini-btn{margin:0;padding:5px 10px;font-size:11px;}
+
+  .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:12px 20px;border-radius:10px;font-size:13px;font-family:'Space Mono',monospace;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:calc(100vw - 48px);}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  @media(max-width:600px){
+    .section-title{font-size:24px;}
+    .quiz-options{grid-template-columns:1fr;}
+    .choices-grid{grid-template-columns:repeat(2,1fr);}
+    .header-right{align-items:flex-start;}
+    .piano-wrap{padding:16px;}
+    .note-big{font-size:52px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="logo">Note<span>Wise</span></div>
+      <div class="tagline">Music Theory · Interactive Learning</div>
+    </div>
+    <div class="header-right">
+      <div class="badges">
+        <div class="level-badge" id="levelBadge">Lv 1 · <b>Novice</b></div>
+        <div class="streak-badge">🔥 <span id="streakNum">0</span> streak</div>
+      </div>
+      <div class="xp-bar-wrap">
+        <span class="xp-label">XP <span id="xpNum">0</span></span>
+        <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+      </div>
+    </div>
+  </header>
+  <div class="next-step">🎯 Next step: <b id="nextStep"></b></div>
+
+  <nav class="nav-tabs" id="navTabs">
+    <button class="tab-btn active" data-tab="keys">🎹 Keys</button>
+    <button class="tab-btn" data-tab="scales">🎼 Scales</button>
+    <button class="tab-btn" data-tab="chords">🎸 Chords</button>
+    <button class="tab-btn" data-tab="ear">👂 Ear Train</button>
+    <button class="tab-btn" data-tab="quiz">🧠 Quiz</button>
+    <button class="tab-btn" data-tab="theory">📖 Theory</button>
+  </nav>
+
+  <!-- KEYS -->
+  <section id="tab-keys" class="section active">
+    <div class="section-title">The <em>Keyboard</em></div>
+    <div class="section-sub">
+      Click any key or play from your computer keyboard — the whole home row is one straight line of white keys.<br>
+      <strong style="color:var(--accent)">Octave 4:</strong> whites <span class="kbd">A S D F G H J</span> · blacks <span class="kbd">W E T Y U</span>
+      &nbsp;|&nbsp;
+      <strong style="color:var(--accent3)">Octave 5:</strong> whites <span class="kbd">K L ; ' Enter Num4 Num5 Num6</span> · blacks <span class="kbd">2 3 Num8 Num9 Num−</span><br>
+      Try it: press <span class="kbd">A</span> through <span class="kbd">K</span> in order and you've just played a C major scale.
+    </div>
+
+    <div class="controls-row">
+      <label class="toggle"><input type="checkbox" id="optNames" checked> Note names</label>
+      <label class="toggle"><input type="checkbox" id="optChars" checked> Keyboard letters</label>
+      <label class="toggle">Sound
+        <select class="sel" id="optSound">
+          <option value="soft">Soft piano</option>
+          <option value="bright">Bright synth</option>
+          <option value="organ">Organ</option>
+        </select>
+      </label>
+      <label class="toggle">Volume <input type="range" id="optVol" min="0" max="1" step="0.05"></label>
+    </div>
+
+    <div class="piano-wrap">
+      <div class="piano" id="piano"></div>
+    </div>
+
+    <div class="piano-wrap">
+      <div class="sec-label">⌨ Computer Keyboard Mapping</div>
+      <div id="kbMap"></div>
+      <div class="legend">
+        <div><i style="background:var(--white-key);border:1px solid #ccc;"></i>White key</div>
+        <div><i style="background:var(--black-key);border:1px solid #444;"></i>Black key</div>
+        <div><i style="background:rgba(240,192,64,.15);border:1px solid var(--accent);"></i>Pressed</div>
+        <div><i style="background:transparent;box-shadow:0 0 0 2px var(--accent3);"></i>In highlighted scale</div>
+      </div>
+    </div>
+
+    <div class="history">
+      <div><span class="hist-l">Interval</span><span id="histInt">Play two notes to see the distance between them</span></div>
+      <div><span class="hist-l">Recent</span><span class="hist-notes" id="histNotes"></span></div>
+    </div>
+
+    <div class="note-info" id="noteInfo">
+      <div class="note-big" id="noteBig">—</div>
+      <div class="note-details">
+        <h3 id="noteName">Click a key to begin</h3>
+        <p id="noteDesc">Each note has a unique name and sound. The pattern of 7 white notes (C D E F G A B) repeats across the keyboard. Look for the groups of two and three black keys — C always sits just left of the pair.</p>
+        <div class="note-freq" id="noteFreq"></div>
+        <div class="facts" id="noteFacts"></div>
+        <div class="btn-row" id="noteActions"></div>
+        <div class="scale-notes" id="scalePills"></div>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <span>Highlight scale:</span>
+      <select class="sel" id="scaleHighlight"></select>
+      <span>Root:</span>
+      <select class="sel" id="rootHighlight"></select>
+      <button class="mini-btn" id="playHighlight">▶ Play it</button>
+    </div>
+    <div class="tip" id="highlightTip" style="display:none;margin-top:0;"></div>
+  </section>
+
+  <!-- SCALES -->
+  <section id="tab-scales" class="section">
+    <div class="section-title">Scales &amp; <em>Modes</em></div>
+    <div class="section-sub">A scale is a set of notes arranged by pitch — the "palette" a melody is painted from. Pick a root, then a scale to hear it and see how its steps are built. <strong>W</strong> = whole step (2 keys), <strong>H</strong> = half step (1 key).</div>
+    <div class="sec-label">Root note</div>
+    <div class="scale-selector" id="rootSelector"></div>
+    <div class="panel" id="scaleDetail"></div>
+    <div class="scale-grid" id="scaleGrid"></div>
+  </section>
+
+  <!-- CHORDS -->
+  <section id="tab-chords" class="section">
+    <div class="section-title">Chords &amp; <em>Harmony</em></div>
+    <div class="section-sub">A chord is three or more notes played together, usually built by stacking 3rds. Choose a root, explore chord types, then hear how chords work together inside a key.</div>
+    <div class="sec-label">Root note</div>
+    <div class="scale-selector" id="chordRootSel"></div>
+    <div class="panel" id="chordDetail"></div>
+    <div class="scale-grid" id="chordGrid"></div>
+    <div class="panel">
+      <h4 id="diaTitle">Chords in the key of C major</h4>
+      <div class="mood">Build a triad on every note of the major scale and you get these seven chords. Capitals are major, lowercase are minor. Click to hear each one.</div>
+      <div class="chip-row" id="diaChips"></div>
+      <h4 style="margin-top:24px;">Famous progressions</h4>
+      <div class="mood">The same few patterns power thousands of songs. Click a card to hear it in the selected key.</div>
+      <div class="prog-grid" id="progGrid"></div>
+    </div>
+  </section>
+
+  <!-- EAR TRAINING -->
+  <section id="tab-ear" class="section">
+    <div class="section-title">Ear <em>Training</em></div>
+    <div class="section-sub">Train your ears to recognise notes, intervals, scales and chords. Pick a level — the ★ marks the one suggested for your current XP level.</div>
+    <div class="ear-mode-tabs" id="earModes">
+      <button class="emode-btn active" data-mode="note">Single Notes</button>
+      <button class="emode-btn" data-mode="interval">Intervals</button>
+      <button class="emode-btn" data-mode="scale">Scales</button>
+      <button class="emode-btn" data-mode="chord">Chords</button>
+    </div>
+    <div class="diff-row" id="earLevels"></div>
+    <div class="ear-container">
+      <div class="ear-status">
+        <div class="ear-emoji" id="earEmoji">🎵</div>
+        <div class="waveform" id="waveform">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+        <div class="ear-prompt" id="earPrompt">Ready to train?</div>
+        <div class="ear-sub" id="earSub"></div>
+      </div>
+      <div class="ear-tools">
+        <button class="play-btn" id="earPlayBtn">▶ Play Sound</button>
+        <button class="ghost-btn" id="earReplayBtn" disabled>↻ Replay</button>
+        <button class="ghost-btn" id="earRefBtn">🎯 Reference C</button>
+      </div>
+      <div class="choices-grid" id="earChoices"></div>
+      <div class="feedback-msg" id="earFeedback"></div>
+      <div class="explain" id="earTip"></div>
+      <div class="score-display">
+        <div class="score-item"><div class="score-num" id="earCorrect">0</div><div class="score-lbl">Correct</div></div>
+        <div class="score-item"><div class="score-num" id="earTotal">0</div><div class="score-lbl">Total</div></div>
+        <div class="score-item"><div class="score-num" id="earPct">—</div><div class="score-lbl">Accuracy</div></div>
+        <div class="score-item"><div class="score-num" id="earBest">0</div><div class="score-lbl">Best streak</div></div>
+      </div>
+      <div class="shortcut">Shortcuts: <span class="kbd">N</span> next sound · <span class="kbd">R</span> replay · piano keys still play, so you can hunt for the pitch</div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="tab-quiz" class="section">
+    <div class="section-title">Theory <em>Quiz</em></div>
+    <div class="section-sub">10 random questions from a bank of 28. Every answer comes with a short explanation, so you learn even when you miss. 15 XP per correct answer, +30 for a perfect score.</div>
+    <div class="quiz-wrap">
+      <div class="quiz-progress" id="quizProgress"></div>
+      <div class="quiz-card" id="quizCard">
+        <div class="quiz-q" id="quizQ">Press Start to begin the quiz</div>
+        <div class="quiz-hint" id="quizHint"></div>
+        <div class="quiz-options" id="quizOpts"></div>
+        <div class="explain" id="quizExplain"></div>
+      </div>
+      <div style="text-align:center;margin-top:12px;display:flex;gap:12px;justify-content:center;">
+        <button class="play-btn" id="startQuizBtn">Start Quiz</button>
+        <button class="next-btn" id="nextQBtn">Next →</button>
+      </div>
+      <div id="quizResult" style="display:none;text-align:center;padding:32px;background:var(--surface);border-radius:16px;border:1px solid var(--border);">
+        <div style="font-family:'Playfair Display',serif;font-size:36px;margin-bottom:8px;color:var(--accent)" id="resultScore"></div>
+        <div style="color:var(--muted);margin-bottom:20px;" id="resultMsg"></div>
+        <button class="play-btn" id="retryQuizBtn">Try Again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- THEORY -->
+  <section id="tab-theory" class="section">
+    <div class="section-title">Theory <em>Reference</em></div>
+    <div class="section-sub">Quick reference cards for essential music theory concepts. Every ▶ button plays an example so you can hear the idea, not just read it.</div>
+    <div class="theory-grid" id="theoryGrid"></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ HELPERS ═════════════════════════════════════════════
+var ALL_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+var WHITE_NOTES = ['C','D','E','F','G','A','B'];
+var BLACK_AFTER = {C:'C#',D:'D#',F:'F#',G:'G#',A:'A#'};
+function $(id){ return document.getElementById(id); }
+function fmt(n){ return String(n).replace(/#/g,'♯'); }
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
+function midiOf(n,o){ return 12*(o+1)+ALL_NOTES.indexOf(n); }
+function midiFreq(m){ return 440*Math.pow(2,(m-69)/12); }
+function midiLabel(m){ return fmt(ALL_NOTES[((m%12)+12)%12])+(Math.floor(m/12)-1); }
+function noteFrequency(n,o){ return midiFreq(midiOf(n,o)); }
+function getScaleNotes(root,f){ var r=ALL_NOTES.indexOf(root); return f.map(function(s){return ALL_NOTES[(r+s)%12];}); }
+var DEG = {0:'1',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9:'6',10:'♭7',11:'7'};
+function degLabel(s,ctx){ s=((s%12)+12)%12; if(ctx==='lydian'&&s===6)return '♯4'; if(ctx==='aug'&&s===8)return '♯5'; return DEG[s]; }
+function stepLabel(d){ return d===1?'H':d===2?'W':d===3?'W+H':String(d); }
+function stepsOf(f){ var o=[]; for(var i=0;i<f.length;i++){ var nx=i+1<f.length?f[i+1]:12; o.push(stepLabel(nx-f[i])); } return o.join(' '); }
+
+// ══ STORAGE ═════════════════════════════════════════════
+var STORE_KEY='notewise-v2';
+var state={xp:0,bestStreak:0,explored:{},sound:'soft',volume:0.8,showNames:true,showChars:true};
+function load(){ try{ var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null'); if(s){ for(var k in s) state[k]=s[k]; } }catch(e){} }
+function save(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(state)); }catch(e){} }
+
+// ══ AUDIO ═══════════════════════════════════════════════
+var audioCtx=null, master=null;
+var SOUNDS={
+  soft:  {partials:[{type:'triangle',mult:1,gain:1},{type:'sine',mult:2,gain:.15}],cutoff:6000,attack:.01,peak:.35},
+  bright:{partials:[{type:'sawtooth',mult:1,gain:.45},{type:'square',mult:.5,gain:.12}],cutoff:3200,attack:.005,peak:.3},
+  organ: {partials:[{type:'sine',mult:1,gain:1},{type:'sine',mult:2,gain:.5},{type:'sine',mult:3,gain:.25},{type:'sine',mult:4,gain:.12}],cutoff:8000,attack:.03,peak:.22,sustain:true}
+};
+function getCtx(){
+  if(!audioCtx){
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var comp=audioCtx.createDynamicsCompressor();
+    comp.threshold.value=-14; comp.ratio.value=4;
+    master=audioCtx.createGain(); master.gain.value=state.volume;
+    master.connect(comp); comp.connect(audioCtx.destination);
+  }
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playNote(freq,duration,delay,level){
+  var ctx=getCtx(), p=SOUNDS[state.sound]||SOUNDS.soft, d=duration||.8, t=ctx.currentTime+(delay||0), pk=p.peak*(level||1);
+  var env=ctx.createGain(), filt=ctx.createBiquadFilter();
+  filt.type='lowpass'; filt.frequency.value=p.cutoff;
+  env.gain.setValueAtTime(0.0001,t);
+  env.gain.exponentialRampToValueAtTime(pk,t+p.attack);
+  if(p.sustain) env.gain.setValueAtTime(pk,t+d*.7);
+  env.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  filt.connect(env); env.connect(master);
+  p.partials.forEach(function(pt){
+    var o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=pt.type; o.frequency.setValueAtTime(freq*pt.mult,t); g.gain.value=pt.gain;
+    o.connect(g); g.connect(filt); o.start(t); o.stop(t+d+.05);
+  });
+}
+function playMidi(m,dur,delay,level){ playNote(midiFreq(m),dur,delay,level); }
+function playNoteByName(n,o,dur){ playMidi(midiOf(n,o||4),dur||.8); }
+function playSeq(midis,gap,dur){ midis.forEach(function(m,i){ playMidi(m,i===midis.length-1?dur*1.8:dur,i*gap); }); }
+function playChord(midis,delay,dur,strum){ midis.forEach(function(m,i){ playMidi(m,dur||1.4,(delay||0)+i*(strum==null?.03:strum),.72); }); }
+function scaleMidis(root,f,oct){ var r=midiOf(root,oct||4); var a=f.map(function(s){return r+s;}); a.push(r+12); return a; }
+function playScaleKey(root,key,desc){ var m=scaleMidis(root,SCALE_FORMULAS[key],4); if(desc)m.reverse(); playSeq(m,.28,.45); return m.length*.28+.6; }
+
+// ══ DATA ════════════════════════════════════════════════
+var NOTE_DATA = {
+  'C':  {name:'C (Do)',    desc:'The anchor of the keyboard — every C sits just left of a group of two black keys. Middle C (C4) is the centre of the piano, and C major uses only white keys.',color:'var(--c-note)'},
+  'C#': {name:'C♯ / D♭',  desc:'A black key with two names: C♯ (C raised a semitone) or D♭ (D lowered a semitone). Which name you use depends on the key you are in.',color:'#c0a030'},
+  'D':  {name:'D (Re)',    desc:'The 2nd note of C major. D major is a favourite of violinists and guitarists because it lines up with their open strings.',color:'var(--d-note)'},
+  'D#': {name:'D♯ / E♭',  desc:'Usually called E♭ in practice. E♭ major is a home key for jazz bands and wind instruments.',color:'#c05040'},
+  'E':  {name:'E (Mi)',    desc:'The 3rd of C major — the note that makes a C chord sound major. E–F is one of only two white-key pairs with no black key between them.',color:'var(--e-note)'},
+  'F':  {name:'F (Fa)',    desc:'Sits just left of the group of three black keys. F major is the first key that needs a flat (B♭).',color:'var(--f-note)'},
+  'F#': {name:'F♯ / G♭',  desc:'Also G♭. F♯ sits exactly halfway between C and the next C — a tritone, the most unstable interval in music.',color:'#3080b0'},
+  'G':  {name:'G (Sol)',   desc:'The 5th of C major — the "dominant". The pull from G back to C is the strongest resolution in Western music.',color:'var(--g-note)'},
+  'G#': {name:'G♯ / A♭',  desc:'Also A♭. A♭ major is a warm, rich key that Romantic composers like Chopin loved.',color:'#30a060'},
+  'A':  {name:'A (La)',    desc:'Concert pitch: A4 = 440 Hz, the note orchestras tune to. A minor is the relative minor of C major — it uses the same white keys.',color:'var(--a-note)'},
+  'A#': {name:'A♯ / B♭',  desc:'Also B♭ — the natural home key of trumpet, clarinet and tenor sax.',color:'#b06020'},
+  'B':  {name:'B (Ti/Si)', desc:'The 7th of C major — the "leading tone". It sits a semitone below C and pulls strongly upward to resolve.',color:'var(--b-note)'}
+};
+var SOLFEGE={C:'Do','C#':'Di / Ra',D:'Re','D#':'Ri / Me',E:'Mi',F:'Fa','F#':'Fi / Se',G:'Sol','G#':'Si / Le',A:'La','A#':'Li / Te',B:'Ti'};
+var ENHARM={'C#':'D♭','D#':'E♭','F#':'G♭','G#':'A♭','A#':'B♭',E:'F♭ (rare)',F:'E♯ (rare)',B:'C♭ (rare)',C:'B♯ (rare)',D:'—',G:'—',A:'—'};
+var KEY_SIG={C:'No sharps or flats',G:'1♯ — F♯',D:'2♯ — F♯ C♯',A:'3♯ — F♯ C♯ G♯',E:'4♯ — F♯ C♯ G♯ D♯',B:'5♯ — F♯ C♯ G♯ D♯ A♯','F#':'6♯ — F♯ C♯ G♯ D♯ A♯ E♯','C#':'As D♭: 5♭ — B♭ E♭ A♭ D♭ G♭','D#':'As E♭: 3♭ — B♭ E♭ A♭',F:'1♭ — B♭','G#':'As A♭: 4♭ — B♭ E♭ A♭ D♭','A#':'As B♭: 2♭ — B♭ E♭'};
+
+var SCALE_FORMULAS = {
+  major:[0,2,4,5,7,9,11], minor:[0,2,3,5,7,8,10], harmonicMinor:[0,2,3,5,7,8,11],
+  pentatonic:[0,2,4,7,9], minorPentatonic:[0,3,5,7,10], blues:[0,3,5,6,7,10],
+  dorian:[0,2,3,5,7,9,10], phrygian:[0,1,3,5,7,8,10], lydian:[0,2,4,6,7,9,11],
+  mixolydian:[0,2,4,5,7,9,10], locrian:[0,1,3,5,6,8,10], chromatic:[0,1,2,3,4,5,6,7,8,9,10,11]
+};
+var SCALE_INFO = [
+  {key:'major',name:'Major Scale',mood:'Happy, bright, uplifting',color:'var(--accent)',use:'Pop, classical, folk, anthems',tip:'The half steps fall between degrees 3–4 and 7–8. That last half step (7→8) is what gives the scale its strong feeling of "coming home".'},
+  {key:'minor',name:'Natural Minor',mood:'Sad, mysterious, emotional',color:'var(--accent3)',use:'Ballads, film scores, metal',tip:'It uses exactly the same notes as the major scale three semitones higher — its "relative major". A minor and C major share every note.'},
+  {key:'harmonicMinor',name:'Harmonic Minor',mood:'Exotic, dramatic, tense',color:'var(--accent2)',use:'Classical, flamenco, neoclassical metal',tip:'Raising the 7th creates a leading tone that pulls hard to the root, and leaves a wide 3-semitone gap (♭6→7) that sounds distinctly Middle-Eastern.'},
+  {key:'pentatonic',name:'Major Pentatonic',mood:'Bright, simple, folk-like',color:'var(--g-note)',use:'Folk, country, East Asian music, pop melodies',tip:'It has no half steps at all, so no two notes clash — it is almost impossible to play a "wrong" note. Try only the black keys: that is F♯ major pentatonic.'},
+  {key:'minorPentatonic',name:'Minor Pentatonic',mood:'Bluesy, raw, rock',color:'var(--b-note)',use:'Rock and blues guitar solos',tip:'Shares its notes with the major pentatonic three semitones up. It is usually the first scale guitarists learn for improvising.'},
+  {key:'blues',name:'Blues Scale',mood:'Soulful, gritty, emotional',color:'#4499cc',use:'Blues, jazz, rock, soul',tip:'The ♭5 "blue note" is a passing tension. Slide through it on the way to the 5th or 4th rather than landing on it.'},
+  {key:'dorian',name:'Dorian Mode',mood:'Cool, jazzy, bittersweet',color:'#88cc44',use:'Jazz, funk, Celtic folk',tip:'Like natural minor but with a raised 6th — that one brighter note makes it sound hopeful rather than tragic. Play D to D on white keys to hear it.'},
+  {key:'phrygian',name:'Phrygian Mode',mood:'Dark, Spanish, intense',color:'#cc5588',use:'Flamenco, metal, film tension',tip:'The ♭2 sitting just above the root gives it a dark, Spanish flavour. Play E to E on white keys to hear it.'},
+  {key:'lydian',name:'Lydian Mode',mood:'Dreamy, floating, magical',color:'#55ccbb',use:'Film scores, video-game music',tip:'A major scale with a raised (♯) 4th. That lifted note makes it sound weightless and dreamy. Play F to F on white keys.'},
+  {key:'mixolydian',name:'Mixolydian Mode',mood:'Rocking, dominant, bluesy',color:'#cc8844',use:'Classic rock, blues, folk',tip:'A major scale with a ♭7 — it is the sound of a dominant 7th chord stretched into a scale. Play G to G on white keys.'},
+  {key:'chromatic',name:'Chromatic Scale',mood:'All 12 semitones — the full palette',color:'var(--muted)',use:'Passing tones, tension, warm-ups',tip:'Every key on the piano, one semitone apart. Other scales are just choices of which of these 12 notes to keep.'}
+];
+var SCALE_NAMES={}; SCALE_INFO.forEach(function(s){SCALE_NAMES[s.key]=s.name;});
+var SCALE_BY_KEY={}; SCALE_INFO.forEach(function(s){SCALE_BY_KEY[s.key]=s;});
+
+var CHORD_TYPES = [
+  {key:'maj', name:'Major',         sym:'',    f:[0,4,7],    color:'var(--accent)', mood:'Bright, stable, resolved',  info:'Root + major 3rd + perfect 5th. The backbone of most music.'},
+  {key:'min', name:'Minor',         sym:'m',   f:[0,3,7],    color:'var(--accent3)',mood:'Sad, reflective, serious',  info:'Lower the 3rd of a major chord by one semitone and the mood flips.'},
+  {key:'dim', name:'Diminished',    sym:'°',   f:[0,3,6],    color:'var(--accent2)',mood:'Tense, unstable, spooky',   info:'Two stacked minor 3rds. It never feels at rest and wants to move on.'},
+  {key:'aug', name:'Augmented',     sym:'+',   f:[0,4,8],    color:'#cc5588',       mood:'Suspenseful, dreamlike',    info:'Two stacked major 3rds — a major chord with a raised 5th.'},
+  {key:'sus2',name:'Suspended 2nd', sym:'sus2',f:[0,2,7],    color:'#55ccbb',       mood:'Open, airy, ambiguous',     info:'The 3rd is replaced by the 2nd, so it is neither major nor minor.'},
+  {key:'sus4',name:'Suspended 4th', sym:'sus4',f:[0,5,7],    color:'var(--g-note)', mood:'Hanging, wants to resolve', info:'The 3rd is replaced by the 4th. It usually resolves down to the major chord.'},
+  {key:'maj7',name:'Major 7th',     sym:'maj7',f:[0,4,7,11], color:'var(--b-note)', mood:'Lush, jazzy, romantic',     info:'A major triad plus the major 7th. Soft, warm and sophisticated.'},
+  {key:'dom7',name:'Dominant 7th',  sym:'7',   f:[0,4,7,10], color:'#cc8844',       mood:'Bluesy, restless, driving', info:'A major triad plus a minor 7th. It pulls strongly to the chord a 5th below — G7 wants to go to C.'},
+  {key:'min7',name:'Minor 7th',     sym:'m7',  f:[0,3,7,10], color:'#4499cc',       mood:'Smooth, mellow, soulful',   info:'A minor triad plus a minor 7th. A staple of R&B, neo-soul and jazz.'}
+];
+var CHORD_BY_KEY={}; CHORD_TYPES.forEach(function(c){CHORD_BY_KEY[c.key]=c;});
+var DIA_Q=['maj','min','min','maj','maj','min','dim'];
+var DIA_NUM=['I','ii','iii','IV','V','vi','vii°'];
+var DIA_FN=['Tonic · home','Supertonic · leads to V','Mediant · soft colour','Subdominant · moves away','Dominant · tension','Relative minor','Leading tone · very tense'];
+var PROGRESSIONS=[
+  {name:'Pop progression',nums:[0,4,5,3],desc:'I–V–vi–IV. Arguably the most-used progression in modern pop — swap the order and it still works.'},
+  {name:'Jazz ii–V–I',nums:[1,4,0],desc:'The core move of jazz harmony: build tension (ii, V) and release it home (I).'},
+  {name:'Blues / Rock I–IV–V',nums:[0,3,4,0],desc:'Three chords that power blues, early rock and roll, and folk.'},
+  {name:'50s doo-wop',nums:[0,5,3,4],desc:'I–vi–IV–V. The classic sound of 1950s ballads.'},
+  {name:'Emotional vi–IV–I–V',nums:[5,3,0,4],desc:'The pop progression started on the minor chord — same chords, sadder feeling.'},
+  {name:'Canon-style descent',nums:[0,4,5,2,3,0,3,4],desc:'I–V–vi–iii–IV–I–IV–V. A long, stepwise-falling bass line in the style of Pachelbel.'}
+];
+
+var INTERVALS=[
+  {name:'Unison',song:'Same note twice.'},
+  {name:'Minor 2nd',song:'The "Jaws" shark theme.'},
+  {name:'Major 2nd',song:'Do → Re; the opening of "Frère Jacques".'},
+  {name:'Minor 3rd',song:'The opening of "Greensleeves".'},
+  {name:'Major 3rd',song:'The opening of "When the Saints Go Marching In".'},
+  {name:'Perfect 4th',song:'"Here Comes the Bride" or "Amazing Grace".'},
+  {name:'Tritone',song:'"The Simpsons" theme or "Maria" from West Side Story.'},
+  {name:'Perfect 5th',song:'The first leap in "Twinkle Twinkle Little Star" or the Star Wars main theme.'},
+  {name:'Minor 6th',song:'The opening leap of the "Love Story" theme.'},
+  {name:'Major 6th',song:'"My Bonnie Lies Over the Ocean" or the NBC chimes.'},
+  {name:'Minor 7th',song:'The first leap of the original "Star Trek" theme.'},
+  {name:'Major 7th',song:'The big leap in the chorus of "Take On Me".'},
+  {name:'Octave',song:'The first leap of "Somewhere Over the Rainbow".'}
+];
+function intervalName(s){ if(s<=12) return INTERVALS[s].name; if(s===24) return 'Two octaves'; return 'Octave + '+INTERVALS[s-12].name; }
+
+// ══ KEYBOARD MAPPING (kept exactly: one straight line) ══
+// Oct4 whites : A S D F G H J      Oct4 blacks : W E T Y U
+// Oct5 whites : K L ; ' Enter Num4 Num5 Num6   Oct5 blacks : 2 3 Num8 Num9 Num-
+var KB_MAP = {
+  'a':{note:'C',oct:4},'w':{note:'C#',oct:4},
+  's':{note:'D',oct:4},'e':{note:'D#',oct:4},
+  'd':{note:'E',oct:4},
+  'f':{note:'F',oct:4},'t':{note:'F#',oct:4},
+  'g':{note:'G',oct:4},'y':{note:'G#',oct:4},
+  'h':{note:'A',oct:4},'u':{note:'A#',oct:4},
+  'j':{note:'B',oct:4},
+  'k':{note:'C',oct:5},'2':{note:'C#',oct:5},
+  'l':{note:'D',oct:5},'3':{note:'D#',oct:5},
+  ';':{note:'E',oct:5},
+  "'":{note:'F',oct:5},'Numpad8':{note:'F#',oct:5},
+  'Enter':{note:'G',oct:5},'NumpadEnter':{note:'G',oct:5},'Numpad9':{note:'G#',oct:5},
+  'Numpad4':{note:'A',oct:5},'NumpadSubtract':{note:'A#',oct:5},
+  'Numpad5':{note:'B',oct:5},
+  'Numpad6':{note:'C',oct:6}
+};
+var OCT4_KEYS = {
+  label:'── OCTAVE 4 ──',
+  whites:[
+    {char:'A',note:'C4',kbkey:'a'},{char:'S',note:'D4',kbkey:'s'},{char:'D',note:'E4',kbkey:'d'},
+    {char:'F',note:'F4',kbkey:'f'},{char:'G',note:'G4',kbkey:'g'},{char:'H',note:'A4',kbkey:'h'},
+    {char:'J',note:'B4',kbkey:'j'}
+  ],
+  blacks:[
+    {char:'W',note:'C#4',kbkey:'w',offset:0},{char:'E',note:'D#4',kbkey:'e',offset:1},
+    {char:'T',note:'F#4',kbkey:'t',offset:3},{char:'Y',note:'G#4',kbkey:'y',offset:4},
+    {char:'U',note:'A#4',kbkey:'u',offset:5}
+  ]
+};
+var OCT5_KEYS = {
+  label:'── OCTAVE 5 ──',
+  whites:[
+    {char:'K',note:'C5',kbkey:'k'},{char:'L',note:'D5',kbkey:'l'},{char:';',note:'E5',kbkey:';'},
+    {char:"'",note:'F5',kbkey:"'"},{char:'Enter',note:'G5',kbkey:'Enter'},{char:'Num4',note:'A5',kbkey:'Numpad4'},
+    {char:'Num5',note:'B5',kbkey:'Numpad5'},{char:'Num6',note:'C6',kbkey:'Numpad6'}
+  ],
+  blacks:[
+    {char:'2',note:'C#5',kbkey:'2',offset:0},{char:'3',note:'D#5',kbkey:'3',offset:1},
+    {char:'Num8',note:'F#5',kbkey:'Numpad8',offset:3},{char:'Num9',note:'G#5',kbkey:'Numpad9',offset:4},
+    {char:'Num-',note:'A#5',kbkey:'NumpadSubtract',offset:5}
+  ]
+};
+var CHAR_LABEL={};
+[OCT4_KEYS,OCT5_KEYS].forEach(function(o){ o.whites.concat(o.blacks).forEach(function(k){ CHAR_LABEL[k.note]=k.char; }); });
+function shortChar(c){ if(!c) return ''; if(c==='Enter') return '↵'; if(c.indexOf('Num')===0) return 'N'+c.slice(3).replace('-','−'); return c; }
+
+// ══ PIANO ═══════════════════════════════════════════════
+function pianoDims(){ var w=window.innerWidth<600?38:52; return {ww:w,bw:Math.round(w*.64),wh:w<52?135:170,bh:w<52?84:106}; }
+function buildPiano(){
+  var piano=$('piano'); piano.innerHTML=''; var D=pianoDims(); var whites=[];
+  for(var oct=4;oct<=5;oct++) WHITE_NOTES.forEach(function(n){ whites.push({note:n,oct:oct}); });
+  whites.push({note:'C',oct:6});
+  whites.forEach(function(k,i){
+    piano.appendChild(makeKey(k.note,k.oct,true,D,null));
+    if(BLACK_AFTER[k.note] && i<whites.length-1){
+      piano.appendChild(makeKey(BLACK_AFTER[k.note],k.oct,false,D,(i+1)*(D.ww+1)-D.bw/2-1));
+    }
+  });
+  piano.style.width=whites.length*(D.ww+1)+'px';
+  piano.style.height=D.wh+'px';
+  piano.classList.toggle('hide-names',!state.showNames);
+  piano.classList.toggle('hide-chars',!state.showChars);
+  applyScaleHighlight();
+}
+function makeKey(note,oct,isWhite,D,left){
+  var el=document.createElement('div');
+  el.className='key '+(isWhite?'white':'black');
+  el.dataset.note=note; el.dataset.octave=oct;
+  el.style.width=(isWhite?D.ww:D.bw)+'px';
+  el.style.height=(isWhite?D.wh:D.bh)+'px';
+  if(left!=null) el.style.left=left+'px';
+  var label=isWhite?(note==='C'?note+oct:note):fmt(note);
+  el.innerHTML='<span class="deg"></span><span class="key-label lbl-name">'+label+'</span><span class="kchip lbl-char">'+shortChar(CHAR_LABEL[note+oct])+'</span>';
+  el.addEventListener('pointerdown',function(e){ e.preventDefault(); triggerKey(note,oct); });
+  return el;
+}
+function setPressed(note,oct,on){
+  document.querySelectorAll('.key[data-note="'+note+'"][data-octave="'+oct+'"]').forEach(function(k){ k.classList.toggle('pressed',on); });
+}
+
+var lastMidi=null, noteHistory=[];
+function triggerKey(note,oct,hold){
+  playNoteByName(note,oct,state.sound==='organ'?1.2:.9);
+  setPressed(note,oct,true);
+  if(!hold) setTimeout(function(){ setPressed(note,oct,false); },200);
+  showNoteInfo(note,oct);
+  updateHistory(midiOf(note,oct));
+  explore('note:'+note,'note '+fmt(note),2);
+}
+function updateHistory(m){
+  if(lastMidi!==null){
+    var d=m-lastMidi, a=Math.abs(d), dir=d>0?' ↑':d<0?' ↓':'';
+    $('histInt').innerHTML=midiLabel(lastMidi)+' → '+midiLabel(m)+': <span class="hist-int">'+intervalName(a)+'</span> ('+a+' semitone'+(a===1?'':'s')+')'+dir;
+  }
+  lastMidi=m;
+  noteHistory.push(midiLabel(m)); if(noteHistory.length>8) noteHistory.shift();
+  $('histNotes').innerHTML=noteHistory.map(function(h){return '<span class="hn">'+h+'</span>';}).join('');
+}
+
+function showNoteInfo(note,oct){
+  var d=NOTE_DATA[note], idx=ALL_NOTES.indexOf(note), m=midiOf(note,oct);
+  $('noteBig').innerHTML=fmt(note)+'<sub>'+oct+'</sub>';
+  $('noteBig').style.color=d.color;
+  $('noteName').textContent=d.name;
+  $('noteDesc').textContent=d.desc;
+  $('noteFreq').textContent='Frequency: '+midiFreq(m).toFixed(2)+' Hz · '+midiLabel(m)+' · MIDI '+m;
+  var maj=getScaleNotes(note,[0,4,7]).map(fmt).join(' '), min=getScaleNotes(note,[0,3,7]).map(fmt).join(' ');
+  var facts=[
+    ['Solfège',SOLFEGE[note]],['Other name',ENHARM[note]],
+    ['Major chord',maj],['Minor chord',min],
+    [fmt(note)+' major key',KEY_SIG[note]],['Relative minor',fmt(ALL_NOTES[(idx+9)%12])+' minor']
+  ];
+  $('noteFacts').innerHTML=facts.map(function(f){return '<div class="fact"><div class="fact-l">'+f[0]+'</div><div class="fact-v">'+f[1]+'</div></div>';}).join('');
+  var acts=$('noteActions'); acts.innerHTML='';
+  [['▶ '+fmt(note)+' major chord',function(){playChord([m,m+4,m+7]);}],
+   ['▶ '+fmt(note)+' minor chord',function(){playChord([m,m+3,m+7]);}],
+   ['▶ '+fmt(note)+' major scale',function(){playScaleKey(note,'major');}]].forEach(function(a){
+    var b=document.createElement('button'); b.className='mini-btn'; b.textContent=a[0]; b.onclick=a[1]; acts.appendChild(b);
+  });
+  var scale=$('scaleHighlight').value, root=$('rootHighlight').value, pills=$('scalePills');
+  if(scale && SCALE_FORMULAS[scale]){
+    var semi=(idx-ALL_NOTES.indexOf(root)+12)%12;
+    var inScale=SCALE_FORMULAS[scale].indexOf(semi)>=0;
+    pills.innerHTML=inScale
+      ?'<span class="scale-pill active-pill">Degree '+degLabel(semi,scale)+' of '+fmt(root)+' '+SCALE_NAMES[scale]+'</span>'
+      :'<span class="scale-pill" style="color:var(--accent2)">Not in '+fmt(root)+' '+SCALE_NAMES[scale]+'</span>';
+  } else {
+    var keys=ALL_NOTES.filter(function(r){ return getScaleNotes(r,SCALE_FORMULAS.major).indexOf(note)>=0; });
+    pills.innerHTML='<span class="pill-lead">Found in these major keys:</span>'+keys.map(function(r){return '<span class="scale-pill" data-root="'+r+'">'+fmt(r)+'</span>';}).join('');
+    pills.querySelectorAll('[data-root]').forEach(function(p){ p.onclick=function(){ setHighlight('major',p.dataset.root); }; });
+  }
+}
+
+function buildHighlightSelects(){
+  $('scaleHighlight').innerHTML='<option value="">None</option>'+SCALE_INFO.map(function(s){return '<option value="'+s.key+'">'+s.name+'</option>';}).join('');
+  $('rootHighlight').innerHTML=ALL_NOTES.map(function(n){return '<option value="'+n+'">'+fmt(n)+'</option>';}).join('');
+  $('scaleHighlight').onchange=applyScaleHighlight;
+  $('rootHighlight').onchange=applyScaleHighlight;
+  $('playHighlight').onclick=function(){
+    var s=$('scaleHighlight').value||'major';
+    if(!$('scaleHighlight').value){ $('scaleHighlight').value='major'; applyScaleHighlight(); }
+    playScaleKey($('rootHighlight').value,s);
+  };
+}
+function setHighlight(scale,root){ $('scaleHighlight').value=scale; $('rootHighlight').value=root; applyScaleHighlight(); showTab('keys'); }
+function applyScaleHighlight(){
+  var scale=$('scaleHighlight').value, root=$('rootHighlight').value;
+  document.querySelectorAll('.key').forEach(function(k){ k.classList.remove('highlighted','root'); var dg=k.querySelector('.deg'); if(dg) dg.textContent=''; });
+  document.querySelectorAll('.kb-key').forEach(function(k){ k.classList.remove('kb-in'); });
+  var tip=$('highlightTip');
+  if(!scale || !SCALE_FORMULAS[scale]){ tip.style.display='none'; return; }
+  var f=SCALE_FORMULAS[scale], rIdx=ALL_NOTES.indexOf(root);
+  document.querySelectorAll('.key').forEach(function(k){
+    var semi=(ALL_NOTES.indexOf(k.dataset.note)-rIdx+12)%12;
+    if(f.indexOf(semi)>=0){
+      k.classList.add('highlighted');
+      if(semi===0) k.classList.add('root');
+      if(scale!=='chromatic') k.querySelector('.deg').textContent=degLabel(semi,scale);
+    }
+  });
+  document.querySelectorAll('.kb-key').forEach(function(k){
+    var m=KB_MAP[k.dataset.kbchar]; if(!m) return;
+    if(f.indexOf((ALL_NOTES.indexOf(m.note)-rIdx+12)%12)>=0) k.classList.add('kb-in');
+  });
+  var info=SCALE_BY_KEY[scale];
+  tip.style.display='block';
+  tip.innerHTML='<strong style="color:var(--text)">'+fmt(root)+' '+info.name+'</strong> — '+getScaleNotes(root,f).map(fmt).join(' ')+'. Numbers on the keys show each note\'s scale degree; the outlined key is the root. Keys outlined blue on the computer keyboard map are the ones to press. '+info.tip;
+}
+
+// ══ COMPUTER KEYBOARD ═══════════════════════════════════
+function kbIdFromEvent(e){ return (e.code==='Enter'||(e.code||'').indexOf('Numpad')===0)?e.code:(e.key||'').toLowerCase(); }
+function kbVisualId(id){ return id==='NumpadEnter'?'Enter':id; }
+function litKb(id,on){ document.querySelectorAll('.kb-key[data-kbchar="'+id+'"]').forEach(function(el){ el.classList.toggle('kb-lit',on); }); }
+function flashKbKey(id){ litKb(id,true); setTimeout(function(){ litKb(id,false); },200); }
+
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  var tg=e.target.tagName; if(tg==='SELECT'||tg==='INPUT'||tg==='TEXTAREA') return;
+  var k=(e.key||'').toLowerCase();
+  if(activeTab==='ear' && (k==='n'||k==='r')){ e.preventDefault(); if(k==='n') playEarChallenge(); else replayEar(); return; }
+  var id=kbIdFromEvent(e), m=KB_MAP[id];
+  if(!m) return;
+  e.preventDefault();
+  if(e.repeat) return;
+  triggerKey(m.note,m.oct,true);
+  litKb(kbVisualId(id),true);
+});
+document.addEventListener('keyup',function(e){
+  var id=kbIdFromEvent(e), m=KB_MAP[id];
+  if(!m) return;
+  setPressed(m.note,m.oct,false); litKb(kbVisualId(id),false);
+});
+window.addEventListener('blur',function(){
+  document.querySelectorAll('.key.pressed').forEach(function(k){k.classList.remove('pressed');});
+  document.querySelectorAll('.kb-lit').forEach(function(k){k.classList.remove('kb-lit');});
+});
+
+function buildKbMap(){
+  var wrap=$('kbMap'); wrap.innerHTML=''; var KW=44, KG=5;
+  function bind(el,kk){ el.addEventListener('pointerdown',function(e){ e.preventDefault(); var m=KB_MAP[kk.kbkey]; if(m){ triggerKey(m.note,m.oct); flashKbKey(kk.kbkey); } }); }
+  function makeBlock(oct){
+    var block=document.createElement('div'); block.style.cssText='display:inline-block;vertical-align:top;';
+    var lbl=document.createElement('div');
+    lbl.style.cssText="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);text-align:center;margin-bottom:8px;letter-spacing:1px;";
+    lbl.textContent=oct.label; block.appendChild(lbl);
+    var totalW=oct.whites.length*(KW+KG)-KG;
+    var blackRow=document.createElement('div'); blackRow.style.cssText='position:relative;height:52px;width:'+totalW+'px;margin-bottom:4px;';
+    oct.blacks.forEach(function(k){
+      var el=document.createElement('div'); el.className='kb-key kb-black'; el.dataset.kbchar=k.kbkey;
+      el.style.cssText='position:absolute;left:'+(k.offset*(KW+KG)+Math.round(KW*.57))+'px;top:0;width:38px;height:48px;';
+      el.innerHTML='<span class="kb-char" style="font-size:'+(k.char.length>1?11:13)+'px">'+k.char+'</span><span class="kb-note">'+fmt(k.note)+'</span>';
+      bind(el,k); blackRow.appendChild(el);
+    });
+    var whiteRow=document.createElement('div'); whiteRow.style.cssText='display:flex;gap:5px;';
+    oct.whites.forEach(function(k){
+      var el=document.createElement('div'); el.className='kb-key kb-white'; el.dataset.kbchar=k.kbkey;
+      el.innerHTML='<span class="kb-char" style="font-size:'+(k.char.length>1?11:15)+'px">'+k.char+'</span><span class="kb-note">'+k.note+'</span>';
+      bind(el,k); whiteRow.appendChild(el);
+    });
+    block.appendChild(blackRow); block.appendChild(whiteRow);
+    return block;
+  }
+  var div=document.createElement('div'); div.style.cssText='display:inline-block;width:2px;background:var(--border);border-radius:2px;vertical-align:top;margin:22px 16px 0;height:100px;';
+  var c=document.createElement('div'); c.style.cssText='display:flex;gap:0;align-items:flex-start;flex-wrap:wrap;row-gap:16px;';
+  c.appendChild(makeBlock(OCT4_KEYS)); c.appendChild(div); c.appendChild(makeBlock(OCT5_KEYS));
+  wrap.appendChild(c);
+}
+
+// ══ MINI PIANO ══════════════════════════════════════════
+function renderMini(notes,root){
+  var WW=22, BW=14, whites=[];
+  for(var o=0;o<2;o++) WHITE_NOTES.forEach(function(n){whites.push(n);});
+  whites.push('C');
+  var h='<div class="mini-wrap"><div class="mini-piano" style="width:'+whites.length*WW+'px">';
+  whites.forEach(function(n,i){
+    var on=notes.indexOf(n)>=0;
+    h+='<div class="mk mw'+(on?' on':'')+(n===root?' rt':'')+'" style="left:'+i*WW+'px;width:'+(WW-1)+'px">'+(on?fmt(n):'')+'</div>';
+    if(BLACK_AFTER[n] && i<whites.length-1){
+      var b=BLACK_AFTER[n], onb=notes.indexOf(b)>=0;
+      h+='<div class="mk mb'+(onb?' on':'')+(b===root?' rt':'')+'" style="left:'+((i+1)*WW-BW/2-.5)+'px;width:'+BW+'px"></div>';
+    }
+  });
+  return h+'</div></div>';
+}
+function rootSelector(elId,current,onPick){
+  var el=$(elId);
+  el.innerHTML=ALL_NOTES.map(function(n){return '<button class="root-btn'+(n===current?' active':'')+'" data-n="'+n+'">'+fmt(n)+'</button>';}).join('');
+  el.onclick=function(e){
+    var b=e.target.closest('.root-btn'); if(!b) return;
+    el.querySelectorAll('.root-btn').forEach(function(x){x.classList.toggle('active',x===b);});
+    onPick(b.dataset.n);
+  };
+}
+function pillsWithDeg(notes,f,ctx){
+  return notes.map(function(n,i){return '<span class="scale-pill">'+fmt(n)+'<span class="pill-deg">'+degLabel(f[i],ctx)+'</span></span>';}).join('');
+}
+
+// ══ SCALES ══════════════════════════════════════════════
+var scaleRoot='C', scaleSel='major';
+function buildScaleSection(){
+  rootSelector('rootSelector',scaleRoot,function(n){ scaleRoot=n; renderScales(); });
+  $('scaleGrid').onclick=function(e){ var c=e.target.closest('.scale-card'); if(c) selectScale(c.dataset.k,true); };
+  renderScales();
+}
+function renderScales(){
+  $('scaleGrid').innerHTML=SCALE_INFO.map(function(s){
+    var f=SCALE_FORMULAS[s.key], notes=getScaleNotes(scaleRoot,f);
+    return '<div class="scale-card'+(s.key===scaleSel?' selected':'')+'" style="--card-accent:'+s.color+'" data-k="'+s.key+'">'
+      +'<h3>'+fmt(scaleRoot)+' '+s.name+'</h3><div class="mood">'+s.mood+'</div>'
+      +'<div class="scale-notes">'+pillsWithDeg(notes,f,s.key)+'</div>'
+      +'<div class="card-meta">Steps: <b>'+stepsOf(f)+'</b><br>Semitones: <b>'+f.join(' ')+'</b><br>Heard in: <b>'+s.use+'</b></div></div>';
+  }).join('');
+  renderScaleDetail();
+}
+function renderScaleDetail(){
+  var s=SCALE_BY_KEY[scaleSel], f=SCALE_FORMULAS[scaleSel], notes=getScaleNotes(scaleRoot,f);
+  var p=$('scaleDetail');
+  p.innerHTML='<h3>'+fmt(scaleRoot)+' '+s.name+'</h3><div class="mood">'+s.mood+' · '+notes.length+' notes · steps '+stepsOf(f)+'</div>'
+    +'<div class="scale-notes">'+pillsWithDeg(notes,f,scaleSel)+'</div>'
+    +renderMini(notes,scaleRoot)
+    +'<div class="tip">'+s.tip+'</div>'
+    +'<div class="btn-row"><button class="mini-btn primary" data-a="up">▶ Ascending</button><button class="mini-btn" data-a="down">▶ Descending</button><button class="mini-btn" data-a="kb">🎹 Show on keyboard</button></div>';
+  p.querySelector('[data-a="up"]').onclick=function(){ playScaleKey(scaleRoot,scaleSel,false); };
+  p.querySelector('[data-a="down"]').onclick=function(){ playScaleKey(scaleRoot,scaleSel,true); };
+  p.querySelector('[data-a="kb"]').onclick=function(){ setHighlight(scaleSel,scaleRoot); };
+}
+function selectScale(k,play){
+  scaleSel=k; renderScales();
+  if(play) playScaleKey(scaleRoot,k);
+  $('scaleHighlight').value=k; $('rootHighlight').value=scaleRoot; applyScaleHighlight();
+  explore('scale:'+k,SCALE_NAMES[k],5);
+}
+
+// ══ CHORDS ══════════════════════════════════════════════
+var chordRoot='C', chordSel='maj', progTimers=[];
+function buildChordSection(){
+  rootSelector('chordRootSel',chordRoot,function(n){ chordRoot=n; renderChords(); });
+  $('chordGrid').onclick=function(e){ var c=e.target.closest('.scale-card'); if(c) selectChord(c.dataset.k,true); };
+  $('diaChips').onclick=function(e){ var c=e.target.closest('.dchip'); if(c) playDiatonic(+c.dataset.d,0); };
+  $('progGrid').onclick=function(e){ var c=e.target.closest('.prog-card'); if(c) playProgression(+c.dataset.i); };
+  renderChords();
+}
+function chordName(root,key){ return fmt(root)+CHORD_BY_KEY[key].sym; }
+function renderChords(){
+  $('chordGrid').innerHTML=CHORD_TYPES.map(function(c){
+    var notes=getScaleNotes(chordRoot,c.f);
+    return '<div class="scale-card'+(c.key===chordSel?' selected':'')+'" style="--card-accent:'+c.color+'" data-k="'+c.key+'">'
+      +'<h3>'+chordName(chordRoot,c.key)+' <span style="color:var(--muted);font-weight:400;font-size:13px">· '+c.name+'</span></h3><div class="mood">'+c.mood+'</div>'
+      +'<div class="scale-notes">'+pillsWithDeg(notes,c.f,c.key)+'</div>'
+      +'<div class="card-meta">Formula: <b>'+c.f.map(function(s){return degLabel(s,c.key);}).join(' ')+'</b></div></div>';
+  }).join('');
+  renderChordDetail();
+  var scale=getScaleNotes(chordRoot,SCALE_FORMULAS.major);
+  $('diaTitle').textContent='Chords in the key of '+fmt(chordRoot)+' major';
+  $('diaChips').innerHTML=scale.map(function(n,i){
+    return '<button class="dchip" data-d="'+i+'"><div class="num">'+DIA_NUM[i]+'</div><div class="nm">'+chordName(n,DIA_Q[i])+'</div><div class="fn">'+DIA_FN[i]+'</div></button>';
+  }).join('');
+  $('progGrid').innerHTML=PROGRESSIONS.map(function(p,i){
+    return '<div class="prog-card" data-i="'+i+'"><h4>▶ '+p.name+'</h4><div class="prog-chords">'
+      +p.nums.map(function(d){return '<span>'+chordName(scale[d],DIA_Q[d])+'</span>';}).join('')
+      +'</div><p>'+p.desc+'</p></div>';
+  }).join('');
+}
+function renderChordDetail(){
+  var c=CHORD_BY_KEY[chordSel], notes=getScaleNotes(chordRoot,c.f), p=$('chordDetail');
+  p.innerHTML='<h3>'+chordName(chordRoot,chordSel)+' — '+fmt(chordRoot)+' '+c.name+'</h3><div class="mood">'+c.mood+'</div>'
+    +'<div class="scale-notes">'+pillsWithDeg(notes,c.f,c.key)+'</div>'
+    +renderMini(notes,chordRoot)
+    +'<div class="tip">'+c.info+'</div>'
+    +'<div class="btn-row"><button class="mini-btn primary" data-a="block">▶ Play chord</button><button class="mini-btn" data-a="arp">▶ Arpeggio</button><button class="mini-btn" data-a="cmp">▶ Compare with major</button></div>';
+  var base=midiOf(chordRoot,4), mid=c.f.map(function(s){return base+s;});
+  p.querySelector('[data-a="block"]').onclick=function(){ playChord(mid); };
+  p.querySelector('[data-a="arp"]').onclick=function(){ playSeq(mid.concat([base+12]),.25,.5); };
+  p.querySelector('[data-a="cmp"]').onclick=function(){ playChord([base,base+4,base+7],0,1.1); playChord(mid,1.3,1.4); };
+}
+function selectChord(k,play){
+  chordSel=k; renderChords();
+  if(play){ var b=midiOf(chordRoot,4); playChord(CHORD_BY_KEY[k].f.map(function(s){return b+s;})); }
+  explore('chord:'+k,CHORD_BY_KEY[k].name+' chord',5);
+}
+function playDiatonic(d,t){
+  var r=midiOf(chordRoot,3)+SCALE_FORMULAS.major[d], f=CHORD_BY_KEY[DIA_Q[d]].f;
+  playMidi(r,1.05,t,.8);
+  f.forEach(function(s,i){ playMidi(r+12+s,1.05,t+i*.02,.6); });
+  var tm=setTimeout(function(){
+    var chip=document.querySelector('.dchip[data-d="'+d+'"]'); if(!chip) return;
+    chip.classList.add('playing'); setTimeout(function(){chip.classList.remove('playing');},900);
+  },t*1000);
+  progTimers.push(tm);
+}
+function playProgression(i){
+  progTimers.forEach(clearTimeout); progTimers=[];
+  var p=PROGRESSIONS[i], card=document.querySelector('.prog-card[data-i="'+i+'"]');
+  var spans=card?card.querySelectorAll('.prog-chords span'):[];
+  p.nums.forEach(function(d,j){
+    var t=j*1.1; playDiatonic(d,t);
+    progTimers.push(setTimeout(function(){ spans.forEach(function(s,k){s.classList.toggle('on',k===j);}); },t*1000));
+  });
+  progTimers.push(setTimeout(function(){ spans.forEach(function(s){s.classList.remove('on');}); },p.nums.length*1100+200));
+  explore('prog:'+i,p.name,5);
+}
+
+// ══ EAR TRAINING ════════════════════════════════════════
+var activeTab='keys';
+var EAR={mode:'note',level:'beginner',answer:null,answered:true,replay:null,playOption:null,label:fmt,tip:'',dur:1,correct:0,total:0};
+var EAR_LEVELS={beginner:{label:'Beginner',xp:5,count:3},intermediate:{label:'Intermediate',xp:10,count:4},advanced:{label:'Advanced',xp:20,count:6}};
+var EAR_HELP={
+  note:{beginner:'White keys only (C D E F G A B), 3 choices. Tip: tap "Reference C" first and compare.',intermediate:'All 12 notes, 4 choices.',advanced:'All 12 notes across octaves 3–5, 6 choices.'},
+  interval:{beginner:'Major 3rd, Perfect 4th, Perfect 5th and Octave — always rising.',intermediate:'Every interval from a minor 2nd to an octave, rising, 4 choices.',advanced:'Every interval — rising, falling, or both notes at once. 6 choices.'},
+  scale:{beginner:'Major vs Natural Minor — listen for the 3rd note.',intermediate:'Major, Minor, Major Pentatonic and Blues.',advanced:'Adds Harmonic Minor and the modes. 6 choices.'},
+  chord:{beginner:'Major vs Minor triads — bright or dark?',intermediate:'Adds Diminished and Augmented.',advanced:'Adds sus4 and 7th chords. 6 choices.'}
+};
+function pickOptions(answer,pool,n){
+  var opts=[answer], rest=shuffle(pool.filter(function(x){return x!==answer;}));
+  while(opts.length<n && rest.length) opts.push(rest.shift());
+  return shuffle(opts);
+}
+function recommendedLevel(){ var i=levelFor(state.xp); return i<2?'beginner':i<4?'intermediate':'advanced'; }
+function renderEarLevels(){
+  var rec=recommendedLevel();
+  $('earLevels').innerHTML=Object.keys(EAR_LEVELS).map(function(k){
+    return '<button class="diff-btn'+(k===EAR.level?' active':'')+'" data-l="'+k+'">'+EAR_LEVELS[k].label+' · '+EAR_LEVELS[k].xp+' XP'+(k===rec?'<span class="rec">★</span>':'')+'</button>';
+  }).join('');
+}
+function buildEar(){
+  EAR.level=recommendedLevel();
+  $('earModes').onclick=function(e){ var b=e.target.closest('.emode-btn'); if(!b) return; EAR.mode=b.dataset.mode;
+    document.querySelectorAll('.emode-btn').forEach(function(x){x.classList.toggle('active',x===b);}); resetEarRound(); };
+  $('earLevels').onclick=function(e){ var b=e.target.closest('.diff-btn'); if(!b) return; EAR.level=b.dataset.l; renderEarLevels(); resetEarRound(); };
+  $('earPlayBtn').onclick=playEarChallenge;
+  $('earReplayBtn').onclick=replayEar;
+  $('earRefBtn').onclick=function(){ playMidi(60,1); };
+  $('earChoices').onclick=function(e){ var b=e.target.closest('.choice-btn'); if(b) checkEarAnswer(b,b.dataset.val); };
+  renderEarLevels(); resetEarRound();
+}
+function resetEarRound(){
+  EAR.answer=null; EAR.answered=true; EAR.replay=null;
+  $('earChoices').innerHTML=''; $('earFeedback').innerHTML=''; $('earFeedback').className='feedback-msg';
+  $('earTip').classList.remove('show');
+  $('earPrompt').textContent='Ready to train?';
+  $('earSub').textContent=EAR_HELP[EAR.mode][EAR.level];
+  $('earEmoji').textContent='🎵';
+  $('earPlayBtn').textContent='▶ Play Sound';
+  $('earReplayBtn').disabled=true;
+  $('earRefBtn').style.display=EAR.mode==='note'?'':'none';
+}
+function genNote(lvl,cnt){
+  var pool=lvl==='beginner'?WHITE_NOTES:ALL_NOTES, n=rand(pool), oct=lvl==='advanced'?rand([3,4,5]):4, m=midiOf(n,oct);
+  var ch=CHAR_LABEL[n+oct];
+  return {answer:n,label:fmt,prompt:'What note is this?',dur:1,
+    replay:function(){playMidi(m,1.1);},
+    playOption:function(v){playMidi(midiOf(v,oct),1.1);},
+    opts:pickOptions(n,pool,cnt),
+    tip:'That was <b>'+midiLabel(m)+'</b> ('+midiFreq(m).toFixed(1)+' Hz, solfège '+SOLFEGE[n]+').'+(ch?' On your keyboard it is the <b>'+ch+'</b> key.':'')+' '+NOTE_DATA[n].desc};
+}
+function genInterval(lvl,cnt){
+  var pool=lvl==='beginner'?[4,5,7,12]:[1,2,3,4,5,6,7,8,9,10,11,12];
+  var s=rand(pool), r=55+Math.floor(Math.random()*10), dir=lvl==='advanced'?rand(['up','down','together']):'up';
+  function play(semi){
+    if(dir==='together'){ playMidi(r,1.3,0,.8); playMidi(r+semi,1.3,0,.8); }
+    else if(dir==='down'){ playMidi(r+semi,.7); playMidi(r,.9,.55); }
+    else { playMidi(r,.7); playMidi(r+semi,.9,.55); }
+  }
+  var dirTxt=dir==='together'?'played together':dir==='down'?'falling':'rising';
+  return {answer:s,label:function(v){return INTERVALS[v].name;},dur:1.4,
+    prompt:dir==='together'?'What interval do these two notes make?':'What interval was that? ('+dirTxt+')',
+    replay:function(){play(s);}, playOption:function(v){play(+v);},
+    opts:pickOptions(s,pool,cnt),
+    tip:'<b>'+INTERVALS[s].name+'</b> = '+s+' semitone'+(s===1?'':'s')+', '+dirTxt+' ('+midiLabel(dir==='down'?r+s:r)+' → '+midiLabel(dir==='down'?r:r+s)+'). Memory hook: '+INTERVALS[s].song};
+}
+function genScale(lvl,cnt){
+  var pool=lvl==='beginner'?['major','minor']:lvl==='intermediate'?['major','minor','pentatonic','blues']:['major','minor','harmonicMinor','pentatonic','blues','dorian','phrygian','lydian','mixolydian'];
+  var k=rand(pool), root=rand(ALL_NOTES);
+  return {answer:k,label:function(v){return SCALE_NAMES[v];},prompt:'What scale was played?',dur:2.8,
+    replay:function(){playScaleKey(root,k);}, playOption:function(v){playScaleKey(root,v);},
+    opts:pickOptions(k,pool,cnt),
+    tip:'<b>'+fmt(root)+' '+SCALE_NAMES[k]+'</b> — '+SCALE_BY_KEY[k].mood+'. Steps: '+stepsOf(SCALE_FORMULAS[k])+'. '+SCALE_BY_KEY[k].tip};
+}
+function genChord(lvl,cnt){
+  var pool=lvl==='beginner'?['maj','min']:lvl==='intermediate'?['maj','min','dim','aug']:['maj','min','dim','aug','sus4','maj7','dom7','min7'];
+  var k=rand(pool), r=55+Math.floor(Math.random()*10);
+  function play(key){ var f=CHORD_BY_KEY[key].f; f.forEach(function(s,i){playMidi(r+s,.5,i*.22,.7);}); playChord(f.map(function(s){return r+s;}),.95,1.4); }
+  return {answer:k,label:function(v){return CHORD_BY_KEY[v].name;},prompt:'What kind of chord was that?',dur:2.3,
+    replay:function(){play(k);}, playOption:function(v){play(v);},
+    opts:pickOptions(k,pool,cnt),
+    tip:'<b>'+midiLabel(r).replace(/\d+$/,'')+CHORD_BY_KEY[k].sym+' ('+CHORD_BY_KEY[k].name+')</b> — '+CHORD_BY_KEY[k].mood+'. '+CHORD_BY_KEY[k].info};
+}
+function setWave(on){ document.querySelectorAll('.wave-bar').forEach(function(b){b.classList.toggle('playing',on);}); }
+function replayEar(){ if(!EAR.replay) return; EAR.replay(); setWave(true); clearTimeout(window._wv); window._wv=setTimeout(function(){setWave(false);},EAR.dur*1000); }
+function playEarChallenge(){
+  var cnt=EAR_LEVELS[EAR.level].count;
+  var g=EAR.mode==='note'?genNote(EAR.level,cnt):EAR.mode==='interval'?genInterval(EAR.level,cnt):EAR.mode==='scale'?genScale(EAR.level,cnt):genChord(EAR.level,cnt);
+  EAR.answer=g.answer; EAR.answered=false; EAR.replay=g.replay; EAR.playOption=g.playOption; EAR.label=g.label; EAR.tip=g.tip; EAR.dur=g.dur;
+  $('earPrompt').textContent=g.prompt;
+  $('earSub').textContent='Listen carefully, then choose below. Press R to hear it again.';
+  $('earEmoji').textContent='🎧';
+  $('earFeedback').innerHTML=''; $('earFeedback').className='feedback-msg';
+  $('earTip').classList.remove('show');
+  $('earReplayBtn').disabled=false;
+  $('earPlayBtn').textContent='▶ New Sound';
+  $('earChoices').innerHTML=g.opts.map(function(o){return '<button class="choice-btn" data-val="'+o+'">'+g.label(o)+'</button>';}).join('');
+  replayEar();
+}
+function checkEarAnswer(btn,val){
+  if(EAR.answered||EAR.answer===null) return;
+  EAR.answered=true; EAR.total++;
+  var ok=String(val)===String(EAR.answer), fb=$('earFeedback');
+  if(ok){
+    EAR.correct++; btn.classList.add('correct');
+    fb.innerHTML='✓ Correct! +'+EAR_LEVELS[EAR.level].xp+' XP'; fb.className='feedback-msg correct-fb';
+    $('earEmoji').textContent='🎉';
+    addXP(EAR_LEVELS[EAR.level].xp); addStreak();
+  } else {
+    btn.classList.add('wrong');
+    fb.innerHTML='<span>✗ It was: '+EAR.label(EAR.answer)+'</span>'; fb.className='feedback-msg wrong-fb';
+    var hb=document.createElement('button'); hb.className='mini-btn'; hb.textContent='▶ Hear your choice ('+EAR.label(val)+')';
+    var po=EAR.playOption; hb.onclick=function(){ po(val); }; fb.appendChild(hb);
+    var cb=document.createElement('button'); cb.className='mini-btn'; cb.textContent='▶ Hear the answer';
+    cb.onclick=replayEar; fb.appendChild(cb);
+    $('earEmoji').textContent='😅';
+    resetStreak();
+    document.querySelectorAll('.choice-btn').forEach(function(b){ if(b.dataset.val===String(EAR.answer)) b.classList.add('correct'); });
+  }
+  document.querySelectorAll('.choice-btn').forEach(function(b){b.disabled=true;});
+  $('earTip').innerHTML=EAR.tip; $('earTip').classList.add('show');
+  $('earCorrect').textContent=EAR.correct; $('earTotal').textContent=EAR.total;
+  $('earPct').textContent=Math.round(EAR.correct/EAR.total*100)+'%';
+  $('earSub').textContent='Press N or "New Sound" for the next one.';
+}
+
+// ══ QUIZ ════════════════════════════════════════════════
+var QUIZ_BANK=[
+  {q:'How many notes are in the chromatic scale?',opts:['7','8','12','10'],a:2,e:'All 12 semitones in an octave — every white and black key before the pattern repeats.'},
+  {q:'Which note is the root of the C Major scale?',opts:['G','A','B','C'],a:3,e:'A scale is named after its root (first note). C major runs C D E F G A B C.'},
+  {q:'How many semitones are in a Major 3rd?',opts:['2','3','4','5'],a:2,e:'C→E passes C♯, D, D♯ and lands on E: 4 semitones. A minor 3rd is one fewer (3).'},
+  {q:'What does a sharp (♯) do to a note?',opts:['Lowers it a semitone','Doubles its frequency','Raises it a semitone','Lengthens it'],a:2,e:'A sharp raises a note by one semitone (one key to the right). A flat (♭) lowers it by one.'},
+  {q:'Which scale follows the pattern W W H W W W H?',opts:['Minor','Pentatonic','Major','Blues'],a:2,e:'That is the major scale. Natural minor is W H W W H W W.'},
+  {q:'What interval is C to G?',opts:['Major 3rd','Perfect 4th','Perfect 5th','Minor 7th'],a:2,e:'C→G is 7 semitones — a perfect 5th, the most consonant interval after the octave.'},
+  {q:'How many notes are in a Major Pentatonic scale?',opts:['4','5','6','7'],a:1,e:'"Penta" means five. It drops the 4th and 7th from the major scale, removing both half steps.'},
+  {q:'The Blues scale adds a ♭5 to which scale?',opts:['Major Pentatonic','Minor Pentatonic','Dorian','Lydian'],a:1,e:'Minor pentatonic (1 ♭3 4 5 ♭7) plus the "blue note" ♭5 gives the blues scale.'},
+  {q:'What makes a minor scale sound "sad"?',opts:['A slower tempo','A flattened 3rd degree','More notes','A higher pitch'],a:1,e:'The ♭3 is the key difference. Compare C–E–G (major) with C–E♭–G (minor).'},
+  {q:'Concert A (A4) is tuned to what frequency?',opts:['432 Hz','440 Hz','450 Hz','420 Hz'],a:1,e:'A4 = 440 Hz is the international standard tuning pitch.'},
+  {q:'Which mode is the same as the Natural Minor scale?',opts:['Dorian','Phrygian','Aeolian','Lydian'],a:2,e:'Aeolian is the 6th mode — play A to A on white keys and you get A natural minor.'},
+  {q:'An octave contains how many semitones?',opts:['7','8','10','12'],a:3,e:'12 semitones, and the frequency doubles: A4 is 440 Hz, A5 is 880 Hz.'},
+  {q:'What is the enharmonic equivalent of F♯?',opts:['E♭','G♭','G♯','A♭'],a:1,e:'F♯ and G♭ are the same key on the piano, just spelled differently.'},
+  {q:'What is the 5th degree of C Major?',opts:['E','F','G','A'],a:2,e:'C(1) D(2) E(3) F(4) G(5). The 5th degree is called the dominant.'},
+  {q:'Which scale is most associated with rock guitar solos?',opts:['Major','Harmonic Minor','Minor Pentatonic','Lydian'],a:2,e:'The minor pentatonic is easy to finger on guitar and has no clashing half steps.'},
+  {q:'Which notes make a C major triad?',opts:['C E G','C D E','C E♭ G','C F A'],a:0,e:'Root (C) + major 3rd (E) + perfect 5th (G). C E♭ G would be C minor.'},
+  {q:'What is the relative minor of C major?',opts:['E minor','A minor','D minor','C minor'],a:1,e:'Count to the 6th degree of C major: A. A minor shares all of C major\'s notes.'},
+  {q:'How many sharps are in G major?',opts:['0','1','2','3'],a:1,e:'G major has one sharp: F♯. Each step clockwise round the circle of fifths adds one sharp.'},
+  {q:'Which major key has exactly one flat?',opts:['B♭ major','F major','E♭ major','D major'],a:1,e:'F major has one flat, B♭. B♭ major has two (B♭, E♭).'},
+  {q:'The chord built on the 5th degree of a key is called the…',opts:['Tonic','Subdominant','Dominant','Mediant'],a:2,e:'The dominant (V). It creates tension that resolves to the tonic (I).'},
+  {q:'A diminished triad is built from…',opts:['Two major 3rds','Two minor 3rds','A major 3rd then a minor 3rd','Two perfect 4ths'],a:1,e:'Two stacked minor 3rds: e.g. B–D–F. Two major 3rds would be augmented.'},
+  {q:'Which interval spans exactly 6 semitones?',opts:['Perfect 4th','Tritone','Perfect 5th','Minor 6th'],a:1,e:'The tritone (three whole tones) splits the octave exactly in half, e.g. C→F♯.'},
+  {q:'Which mode has a raised (♯) 4th?',opts:['Mixolydian','Dorian','Lydian','Locrian'],a:2,e:'Lydian = major scale with a ♯4, which gives its dreamy, floating sound.'},
+  {q:'In C major, which chord is the vi chord?',opts:['A minor','G major','E minor','F major'],a:0,e:'The 6th note of C major is A, and the triad built there (A C E) is minor.'},
+  {q:'What frequency is the A one octave above A440?',opts:['660 Hz','880 Hz','550 Hz','1000 Hz'],a:1,e:'Going up an octave doubles the frequency: 440 × 2 = 880 Hz.'},
+  {q:'Which notes make a G dominant 7th (G7) chord?',opts:['G B D F♯','G B D F','G B♭ D F','G C D F'],a:1,e:'Major triad G B D plus a minor 7th (F). G B D F♯ would be Gmaj7.'},
+  {q:'Mixolydian differs from the major scale by having a…',opts:['♭3','♯4','♭7','♭6'],a:2,e:'Mixolydian is major with a flattened 7th — the sound of a dominant 7th chord.'},
+  {q:'Dorian differs from natural minor by having a…',opts:['Raised 6th','Raised 3rd','Lowered 2nd','Lowered 5th'],a:0,e:'Dorian = natural minor with a raised (natural) 6th, giving it a brighter, jazzy minor colour.'}
+];
+var quizQs=[],quizIdx=0,quizScore=0,quizAnswered=false;
+function startQuiz(){
+  quizQs=shuffle(QUIZ_BANK).slice(0,10).map(function(q){return {q:q.q,e:q.e,a:q.opts[q.a],opts:shuffle(q.opts)};});
+  quizIdx=0; quizScore=0;
+  $('quizResult').style.display='none'; $('quizCard').style.display='block'; $('startQuizBtn').style.display='none';
+  $('quizProgress').innerHTML=quizQs.map(function(_,i){return '<div class="qp-dot'+(i===0?' current':'')+'"></div>';}).join('');
+  renderQuestion();
+}
+function renderQuestion(){
+  var q=quizQs[quizIdx];
+  $('quizQ').textContent=q.q;
+  $('quizHint').textContent='Question '+(quizIdx+1)+' of '+quizQs.length;
+  $('quizOpts').innerHTML=q.opts.map(function(o,i){return '<button class="quiz-opt" data-i="'+i+'">'+o+'</button>';}).join('');
+  $('quizExplain').classList.remove('show');
+  $('nextQBtn').classList.remove('show');
+  quizAnswered=false;
+}
+function checkQuiz(btn){
+  if(quizAnswered) return; quizAnswered=true;
+  var q=quizQs[quizIdx], chosen=q.opts[+btn.dataset.i], dots=document.querySelectorAll('.qp-dot'), opts=document.querySelectorAll('.quiz-opt');
+  dots[quizIdx].classList.remove('current');
+  if(chosen===q.a){ btn.classList.add('correct'); quizScore++; addXP(15); addStreak(); dots[quizIdx].style.background='var(--g-note)'; }
+  else { btn.classList.add('wrong'); resetStreak(); dots[quizIdx].style.background='var(--accent2)';
+    opts.forEach(function(b){ if(q.opts[+b.dataset.i]===q.a) b.classList.add('correct'); }); }
+  opts.forEach(function(b){b.disabled=true;});
+  $('quizExplain').innerHTML='<b>'+(chosen===q.a?'Correct.':'Answer: '+q.a+'.')+'</b> '+q.e;
+  $('quizExplain').classList.add('show');
+  $('nextQBtn').textContent=quizIdx+1<quizQs.length?'Next →':'See results →';
+  $('nextQBtn').classList.add('show');
+  if(quizIdx+1<quizQs.length) dots[quizIdx+1].classList.add('current');
+}
+function nextQuestion(){ quizIdx++; if(quizIdx>=quizQs.length) showQuizResult(); else renderQuestion(); }
+function showQuizResult(){
+  $('quizCard').style.display='none'; $('quizResult').style.display='block'; $('nextQBtn').classList.remove('show');
+  var pct=Math.round(quizScore/quizQs.length*100);
+  $('resultScore').textContent=quizScore+' / '+quizQs.length+' — '+pct+'%';
+  $('resultMsg').textContent=pct===100?'🏆 Perfect score! +30 bonus XP.':pct>=80?'🎉 Excellent! You really know your theory!':pct>=60?'👍 Good effort! Review the Theory tab for the ones you missed.':'📚 Keep going — every explanation you read sticks a little more.';
+  if(pct===100) addXP(30,'Perfect quiz');
+}
+
+// ══ THEORY ══════════════════════════════════════════════
+var DEMOS={
+  alphabet:function(){playSeq([60,62,64,65,67,69,71,72],.3,.45);},
+  semitone:function(){playMidi(60,.7);playMidi(61,.9,.6);},
+  tone:function(){playMidi(60,.7);playMidi(62,.9,.6);},
+  enharm:function(){playMidi(66,.8);playMidi(66,.8,.8);},
+  major:function(){playScaleKey('C','major');},
+  minor:function(){playSeq(scaleMidis('A',SCALE_FORMULAS.minor,3),.28,.45);},
+  harmonic:function(){playSeq(scaleMidis('A',SCALE_FORMULAS.harmonicMinor,3),.28,.45);},
+  consonant:function(){playChord([60,67],0,1.3,0);playChord([60,64],1.5,1.3,0);},
+  dissonant:function(){playChord([60,61],0,1.3,0);playChord([60,66],1.5,1.3,0);},
+  majVsMin:function(){playChord([60,64,67],0,1.2);playChord([60,63,67],1.4,1.4);},
+  sevenths:function(){playChord([60,64,67,71],0,1.4);playChord([60,64,67,70],1.6,1.4);},
+  prog:function(){chordRoot='C';renderChords();playProgression(0);},
+  resolve:function(){playChord([55,59,62,65],0,1.2);playChord([48,60,64,67],1.3,1.6);},
+  penta:function(){playScaleKey('C','pentatonic');},
+  blackkeys:function(){playSeq([66,68,70,73,75,78],.28,.45);},
+  blues:function(){playScaleKey('C','blues');},
+  fifths:function(){playSeq([48,55,62,69,76],.45,.6);},
+  relative:function(){playScaleKey('C','major');setTimeout(function(){playSeq(scaleMidis('A',SCALE_FORMULAS.minor,3),.28,.45);},2900);},
+  parallel:function(){playScaleKey('C','major');setTimeout(function(){playScaleKey('C','minor');},2900);},
+  rhythm:function(){var q=.6;for(var i=0;i<4;i++)playMidi(84,.08,i*q,i===0?1:.55);for(var j=0;j<8;j++)playMidi(84,.06,2.6+j*q/2,j%2===0?.9:.45);}
+};
+['major','dorian','phrygian','lydian','mixolydian','minor','locrian'].forEach(function(k){ DEMOS['mode:'+k]=function(){playScaleKey('C',k);}; });
+for(var _s=1;_s<=12;_s++)(function(s){ DEMOS['int:'+s]=function(){playMidi(60,.7);playMidi(60+s,.9,.55);}; })(_s);
+function demo(id,label){ return '<button class="mini-btn" data-demo="'+id+'">▶ '+(label||'Hear it')+'</button>'; }
+
+var THEORY_CARDS=[
+  {title:'The Musical Alphabet',html:`<p>Western music uses 7 natural notes: <strong style="color:var(--accent)">C D E F G A B</strong>, then the letters repeat. Each repeat is one <strong>octave</strong> higher and exactly double the frequency.</p><p>Finding your way: black keys come in groups of <strong>two and three</strong>. C is always the white key just left of the pair; F is just left of the trio.</p>`+demo('alphabet','C to C')},
+  {title:'Tones & Semitones',html:`<p>A <strong>semitone</strong> (half step, H) is the distance to the very next key, black or white. A <strong>tone</strong> (whole step, W) is two semitones.</p><p>E–F and B–C are semitones even though both are white keys — there is no black key between them.</p><p>Major scale formula: <span class="mono">W W H W W W H</span></p>`+demo('semitone','Semitone C→C♯')+demo('tone','Tone C→D')},
+  {title:'Sharps, Flats & Enharmonics',html:`<p><strong>♯ sharp</strong> raises a note a semitone, <strong>♭ flat</strong> lowers it, and <strong>♮ natural</strong> cancels either.</p><p>One key can have two names — C♯ and D♭ sound identical. These are <strong>enharmonic</strong> equivalents. Which spelling is right depends on the key: scales use each letter once, so D major has F♯, never G♭.</p>`+demo('enharm','F♯ = G♭')},
+  {title:'The Major Scale',html:`<p>Seven notes in the pattern W W H W W W H. It sounds <em>happy, bright and settled</em>. C major uses only white keys.</p><p>Each degree has a name: <strong>1</strong> tonic · <strong>2</strong> supertonic · <strong>3</strong> mediant · <strong>4</strong> subdominant · <strong>5</strong> dominant · <strong>6</strong> submediant · <strong>7</strong> leading tone.</p>`+demo('major','C major')},
+  {title:'Minor Scales',html:`<p><strong>Natural minor:</strong> W H W W H W W — sounds <em>sad or mysterious</em>. A minor uses all white keys.</p><p><strong>Harmonic minor</strong> raises the 7th so it pulls strongly home. <strong>Melodic minor</strong> raises the 6th and 7th going up, and often uses natural minor coming down.</p>`+demo('minor','A natural minor')+demo('harmonic','A harmonic minor')},
+  {title:'Intervals',html:'<p style="margin-bottom:8px">The distance between two notes. Click any row to hear it from C.</p><table class="interval-table"><tr><th>Name</th><th>Semis</th><th>From C</th><th></th></tr>'+INTERVALS.slice(1).map(function(iv,i){var s=i+1;return '<tr data-demo="int:'+s+'"><td>'+iv.name+'</td><td>'+s+'</td><td>C→'+fmt(ALL_NOTES[s%12])+'</td><td class="pl">▶</td></tr>';}).join('')+'</table>'},
+  {title:'Consonance & Dissonance',html:`<p><strong>Consonant</strong> intervals sound stable and blended: octaves, 5ths, 4ths, 3rds and 6ths.</p><p><strong>Dissonant</strong> intervals sound tense and want to move: 2nds, 7ths and the tritone.</p><p>Music works by creating tension and then releasing it. Dissonance isn't "wrong" — it is what makes resolution feel satisfying.</p>`+demo('consonant','Consonant')+demo('dissonant','Dissonant')},
+  {title:'Triads & 7th Chords',html:`<p>Chords are built by stacking 3rds on a root:</p><ul><li><strong>Major</strong> — M3 + m3 (C E G)</li><li><strong>Minor</strong> — m3 + M3 (C E♭ G)</li><li><strong>Diminished</strong> — m3 + m3 (C E♭ G♭)</li><li><strong>Augmented</strong> — M3 + M3 (C E G♯)</li></ul><p>Stack one more 3rd to get a <strong>7th chord</strong>: Cmaj7 (C E G B) or C7 (C E G B♭).</p>`+demo('majVsMin','Major vs minor')+demo('sevenths','maj7 vs 7')+'<button class="mini-btn" data-goto="chords">🎸 Open Chords tab</button>'},
+  {title:'Roman Numerals & Function',html:`<p>Chords in a key are numbered by their scale degree: <span class="mono">I ii iii IV V vi vii°</span>. Uppercase = major, lowercase = minor, ° = diminished.</p><p>Chords have jobs: <strong>I</strong> is home (tonic), <strong>IV</strong> moves away (subdominant), <strong>V</strong> creates tension (dominant) that resolves back to I. Because they're numbers, a progression works in every key.</p>`+demo('resolve','V7 → I')+demo('prog','I–V–vi–IV')},
+  {title:'Pentatonic Scale',html:`<p>Only 5 notes — the simplest scale. <strong>Major pentatonic:</strong> 1 2 3 5 6. <strong>Minor pentatonic:</strong> 1 ♭3 4 5 ♭7.</p><p>It has no half steps, so nothing clashes. That's why it appears in folk music worldwide, from blues to Chinese and Celtic traditions. The five black keys on a piano form a pentatonic scale.</p>`+demo('penta','C major pentatonic')+demo('blackkeys','Black keys only')},
+  {title:'The Blues Scale',html:`<p>Minor pentatonic plus the "blue note" ♭5. Formula: <span class="mono">1 ♭3 4 ♭5 5 ♭7</span>.</p><p>The ♭5 adds gritty tension. Players usually slide or bend through it rather than resting on it.</p>`+demo('blues','C blues')},
+  {title:'Modes',html:`<p>Each mode is the major scale started from a different degree. In C, play white keys from:</p><ul><li><strong>C — Ionian</strong>: the major scale</li><li><strong>D — Dorian</strong>: minor with a raised 6th (jazzy)</li><li><strong>E — Phrygian</strong>: minor with a ♭2 (Spanish, dark)</li><li><strong>F — Lydian</strong>: major with a ♯4 (dreamy)</li><li><strong>G — Mixolydian</strong>: major with a ♭7 (bluesy)</li><li><strong>A — Aeolian</strong>: natural minor</li><li><strong>B — Locrian</strong>: ♭2 and ♭5 (unstable, rare)</li></ul><p style="margin-top:6px">Hear them all from the same root C to compare their colours:</p><div class="mode-btns">`+[['major','Ionian'],['dorian','Dorian'],['phrygian','Phrygian'],['lydian','Lydian'],['mixolydian','Mixolydian'],['minor','Aeolian'],['locrian','Locrian']].map(function(m){return demo('mode:'+m[0],m[1]);}).join('')+`</div>`},
+  {title:'Circle of Fifths',html:`<p>All 12 keys arranged a perfect 5th apart. Clockwise adds a sharp; counter-clockwise adds a flat.</p><p style="color:var(--accent);font-family:'Space Mono',monospace;font-size:12px">C→G→D→A→E→B→F♯/G♭→D♭→A♭→E♭→B♭→F→C</p><p>Use it to: read key signatures, find closely related keys (neighbours share 6 of 7 notes), and predict chord movement — music loves moving counter-clockwise, like V→I.</p>`+demo('fifths','Stacked fifths')},
+  {title:'Relative & Parallel Keys',html:`<p><strong>Relative</strong> keys share the same notes but a different home. The relative minor is on the 6th degree (3 semitones below the root): C major ↔ A minor, G major ↔ E minor, F major ↔ D minor.</p><p><strong>Parallel</strong> keys share the same root but different notes: C major ↔ C minor.</p>`+demo('relative','C major → A minor')+demo('parallel','C major → C minor')},
+  {title:'Key Signatures',html:`<p><strong>Order of sharps:</strong> <span class="mono">F C G D A E B</span><br><strong>Order of flats:</strong> <span class="mono">B E A D G C F</span> (the reverse)</p><ul><li>Sharp keys: the key is a semitone <em>above</em> the last sharp (F♯ C♯ → D major)</li><li>Flat keys: the second-to-last flat names the key (B♭ E♭ A♭ → E♭ major)</li><li>F major is the one to memorise: a single flat, B♭</li></ul>`},
+  {title:'Rhythm Basics',html:`<p>In 4/4 time: <strong>whole</strong> note = 4 beats · <strong>half</strong> = 2 · <strong>quarter</strong> = 1 · <strong>eighth</strong> = ½ · <strong>sixteenth</strong> = ¼.</p><p>A <strong>time signature</strong>'s top number is beats per bar; the bottom says which note gets the beat. <strong>Tempo</strong> is measured in BPM (beats per minute).</p>`+demo('rhythm','Quarters then eighths')},
+  {title:'Your Learning Path',html:`<ol><li><strong>Keys</strong> — find every C, then play A→K for a C major scale</li><li><strong>Scales</strong> — play major then minor on the same root and listen for the 3rd</li><li><strong>Ear Training</strong> — start on Beginner, move up when you hit 80%</li><li><strong>Chords</strong> — hear the seven chords of a key, then the progressions</li><li><strong>Quiz</strong> — test yourself and read the explanations</li><li>Come back daily — 10 minutes beats one long session</li></ol>`}
+];
+function buildTheory(){
+  var g=$('theoryGrid');
+  g.innerHTML=THEORY_CARDS.map(function(c){return '<div class="theory-card"><h3>'+c.title+'</h3>'+c.html+'</div>';}).join('');
+  g.onclick=function(e){
+    var d=e.target.closest('[data-demo]'); if(d && DEMOS[d.dataset.demo]){ DEMOS[d.dataset.demo](); return; }
+    var t=e.target.closest('[data-goto]'); if(t) showTab(t.dataset.goto);
+  };
+}
+
+// ══ GAMIFICATION / LEVELS ═══════════════════════════════
+var LEVELS=[{xp:0,name:'Novice'},{xp:100,name:'Listener'},{xp:250,name:'Apprentice'},{xp:500,name:'Player'},{xp:850,name:'Musician'},{xp:1300,name:'Composer'},{xp:2000,name:'Virtuoso'},{xp:3000,name:'Maestro'}];
+var LEVEL_TIPS=[
+  'Press A S D F G H J K on your keyboard to play a C major scale',
+  'Try Ear Training → Single Notes on Beginner',
+  'Open the Chords tab and play the Pop progression',
+  'Switch Ear Training to Intermediate and try Intervals',
+  'Take the Quiz and aim for 8 out of 10',
+  'Explore the modes — compare Dorian and Lydian in Scales',
+  'Advanced ear training: falling and harmonic intervals',
+  'You\'re a Maestro — keep your streak alive!'
+];
+var streak=0;
+function levelFor(x){ var i=0; while(i+1<LEVELS.length && x>=LEVELS[i+1].xp) i++; return i; }
+function updateXPUI(){
+  var i=levelFor(state.xp), next=LEVELS[i+1];
+  $('levelBadge').innerHTML='Lv '+(i+1)+' · <b>'+LEVELS[i].name+'</b>';
+  $('xpNum').textContent=state.xp+(next?' / '+next.xp:'');
+  $('xpFill').style.width=(next?(state.xp-LEVELS[i].xp)/(next.xp-LEVELS[i].xp)*100:100)+'%';
+  $('nextStep').textContent=LEVEL_TIPS[i];
+  $('earBest').textContent=state.bestStreak;
+}
+function addXP(n,reason){
+  var before=levelFor(state.xp);
+  state.xp+=n; save(); updateXPUI();
+  var after=levelFor(state.xp);
+  if(after>before){ showToast('⭐ Level up! Lv '+(after+1)+' · '+LEVELS[after].name,3200); renderEarLevels(); }
+  else showToast('+'+n+' XP'+(reason?' · '+reason:''));
+}
+function explore(key,label,amt){ if(state.explored[key]) return; state.explored[key]=1; addXP(amt||5,'New '+label); }
+function addStreak(){ streak++; $('streakNum').textContent=streak; if(streak>state.bestStreak){ state.bestStreak=streak; save(); $('earBest').textContent=streak; } if(streak%5===0) showToast('🔥 '+streak+' in a row!'); }
+function resetStreak(){ streak=0; $('streakNum').textContent=0; }
+function showToast(msg,ms){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(function(){t.classList.remove('show');},ms||1800); }
+
+// ══ TABS & SETTINGS ═════════════════════════════════════
+function showTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab);});
+  $('tab-'+tab).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$('navTabs').onclick=function(e){ var b=e.target.closest('.tab-btn'); if(b) showTab(b.dataset.tab); };
+$('startQuizBtn').onclick=startQuiz;
+$('retryQuizBtn').onclick=startQuiz;
+$('nextQBtn').onclick=nextQuestion;
+$('quizOpts').onclick=function(e){ var b=e.target.closest('.quiz-opt'); if(b) checkQuiz(b); };
+
+function bindSettings(){
+  $('optNames').checked=state.showNames; $('optChars').checked=state.showChars;
+  $('optSound').value=state.sound; $('optVol').value=state.volume;
+  $('optNames').onchange=function(){ state.showNames=this.checked; $('piano').classList.toggle('hide-names',!this.checked); save(); };
+  $('optChars').onchange=function(){ state.showChars=this.checked; $('piano').classList.toggle('hide-chars',!this.checked); save(); };
+  $('optSound').onchange=function(){ state.sound=this.value; save(); playChord([60,64,67]); this.blur(); };
+  $('optVol').oninput=function(){ state.volume=+this.value; if(master) master.gain.value=state.volume; save(); };
+}
+
+// ══ INIT ════════════════════════════════════════════════
+load();
+bindSettings();
+buildHighlightSelects();
+buildKbMap();
+buildPiano();
+buildScaleSection();
+buildChordSection();
+buildEar();
+buildTheory();
+updateXPUI();
+var _lastW=pianoDims().ww;
+window.addEventListener('resize',function(){ var w=pianoDims().ww; if(w!==_lastW){ _lastW=w; buildPiano(); } });
+</script>
+</body>
+</html>

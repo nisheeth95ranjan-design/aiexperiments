@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Service Design Academy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SD Academy">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: a phone-first app shell. Content reads like a service blueprint:
+   horizontal lanes, dashed "lines" as dividers, touchpoint dots for progress. */
+:root{
+  --paper:#EDF0F4; --surface:#FFFFFF; --sunk:#E3E8EF; --ink:#111B2E; --muted:#545F75; --line:#CBD3DE;
+  --accent:#0A7560; --accent-ink:#FFFFFF; --accent-soft:#D6EDE6;
+  --signal:#A9500C; --signal-soft:#F7E5D1;
+  --good:#127A3C; --good-soft:#DCF0E3; --bad:#B42318; --bad-soft:#F8DFDB;
+  --f-display:'Google Sans Flex','Google Sans','Product Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-body:'Google Sans Flex','Google Sans','Product Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'Google Sans Code',ui-monospace,Menlo,Consolas,monospace;
+  --nav-h:64px; --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0C121D; --surface:#151D2B; --sunk:#1C2636; --ink:#E5EAF2; --muted:#98A3B8; --line:#2A3548;
+  --accent:#3FC3A2; --accent-ink:#04211A; --accent-soft:#12352D;
+  --signal:#F0A44E; --signal-soft:#3A2913;
+  --good:#4CD585; --good-soft:#123321; --bad:#F7877C; --bad-soft:#3D1A17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0C121D; --surface:#151D2B; --sunk:#1C2636; --ink:#E5EAF2; --muted:#98A3B8; --line:#2A3548;
+  --accent:#3FC3A2; --accent-ink:#04211A; --accent-soft:#12352D;
+  --signal:#F0A44E; --signal-soft:#3A2913;
+  --good:#4CD585; --good-soft:#123321; --bad:#F7877C; --bad-soft:#3D1A17; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{background:var(--paper)}
+body{color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent;
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px)}
+body.in-session{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15;letter-spacing:-.01em}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;min-height:56px;
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:13px;flex-shrink:0}
+.top-title{flex:1;min-width:0;font-family:var(--f-display);font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-title small{display:block;font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.xp{font-family:var(--f-mono);font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+.iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.iconbtn svg{width:18px;height:18px}
+.strip{max-width:720px;margin:0 auto;display:flex;gap:3px;padding-bottom:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.strip i{flex:1;height:4px;border-radius:2px;background:var(--sunk)}
+.strip i.on{background:var(--accent)}
+.strip i.now{background:var(--ink)}
+
+/* main */
+main{max-width:720px;margin:0 auto;padding-block:20px 8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+
+/* bottom nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+body.in-session nav.tabs{display:none}
+.tabs-in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--nav-h)}
+.tab{background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:11px;font-weight:700;position:relative}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--accent)}
+.tab .badge{position:absolute;top:8px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--signal);color:var(--surface);font-size:10px;display:grid;place-items:center;font-family:var(--f-mono)}
+
+/* hero */
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:6px}
+.hero h1{font-size:clamp(34px,9vw,52px);font-weight:700;line-height:1}
+.hero h1 span{color:var(--accent)}
+.lede{color:var(--muted);max-width:56ch}
+.journey{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.journey-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.journey-head b{font-family:var(--f-display);font-size:19px}
+.tps{display:flex;align-items:center;position:relative;padding:6px 0}
+.tps::before{content:"";position:absolute;left:6px;right:6px;top:50%;height:2px;background:var(--line)}
+.tps::after{content:"";position:absolute;left:6px;top:50%;height:2px;background:var(--accent);width:var(--fill,0%)}
+.tp{position:relative;z-index:1;flex:1;display:flex;justify-content:center}
+.tp:first-child{justify-content:flex-start}.tp:last-child{justify-content:flex-end}
+.tp i{width:13px;height:13px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:block}
+.tp.on i{background:var(--accent);border-color:var(--accent)}
+.tp.next i{border-color:var(--ink);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
+.vis{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.vis::before,.vis::after{content:"";flex:1;border-top:1.5px dashed var(--line)}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-align:center}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.accent{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+
+/* module list */
+.track{display:flex;flex-direction:column;gap:8px}
+.track-h{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.track-h::after{content:"";flex:1;border-top:1px solid var(--line)}
+.mlist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.mrow{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:14px 14px;cursor:pointer}
+.mrow:first-child{border-top:0}
+.mrow:hover{background:var(--sunk)}
+.mcode{font-family:var(--f-mono);font-weight:600;font-size:12px;color:var(--muted);width:44px;height:44px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center}
+.mrow.done .mcode{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.mname{font-family:var(--f-display);font-weight:700;font-size:16.5px;line-height:1.2}
+.mmeta{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.lvl{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--sunk);color:var(--ink)}
+.lvl.Expert{background:var(--signal-soft);color:var(--signal)}
+.lvl.Practitioner{background:var(--accent-soft);color:var(--accent)}
+.pct{font-family:var(--f-mono);font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+.mrow.done .pct{color:var(--accent)}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;display:flex;flex-direction:column;gap:16px}
+.eyebrow{display:flex;gap:10px;align-items:center;color:var(--muted);flex-wrap:wrap}
+.eyebrow .kind{color:var(--accent)}
+.eyebrow .kind.q{color:var(--signal)}
+.card h2{font-size:24px;font-weight:700}
+.card h2.q{font-size:20px;line-height:1.3}
+.prose{max-width:65ch}
+.prose b{font-weight:700}
+.ctx{background:var(--sunk);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--muted)}
+dl.pts{margin:0;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+dl.pts div{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;padding:11px 0;border-bottom:1px solid var(--line)}
+@media(min-width:560px){dl.pts div{grid-template-columns:170px minmax(0,1fr);gap:14px}}
+dl.pts dt{font-weight:700;font-size:14.5px}
+dl.pts dd{margin:0;font-size:14.5px;color:var(--muted)}
+.note{border-radius:10px;padding:14px;font-size:14.5px;display:flex;flex-direction:column;gap:6px}
+.note.expert{background:var(--signal-soft)}
+.note.expert .mono{color:var(--signal)}
+.note.field{background:var(--accent-soft)}
+.note.field .mono{color:var(--accent)}
+.refs{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.refs .mono{margin-bottom:2px}
+figure.lanes{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figure.lanes figcaption{padding:9px 12px;background:var(--ink);color:var(--paper)}
+.lane{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:14px}
+.lane:first-of-type{border-top:0}
+.lane b{font-weight:700}
+.lane span{color:var(--muted)}
+.lane-line{display:flex;align-items:center;gap:8px;padding:4px 12px;color:var(--signal);background:var(--sunk)}
+.lane-line::before,.lane-line::after{content:"";flex:1;border-top:1.5px dashed var(--signal)}
+.lane-line + .lane{border-top:0}
+
+/* options */
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font-size:15px;line-height:1.4}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .key{font-family:var(--f-mono);font-size:12px;font-weight:600;width:24px;height:24px;border-radius:6px;background:var(--sunk);display:grid;place-items:center;flex-shrink:0}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.right .key{background:var(--good);color:var(--surface)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.wrong .key{background:var(--bad);color:var(--surface)}
+.fb{border-radius:12px;padding:14px;font-size:14.5px;display:flex;flex-direction:column;gap:6px;border-left:4px solid}
+.fb.ok{background:var(--good-soft);border-color:var(--good)}
+.fb.no{background:var(--bad-soft);border-color:var(--bad)}
+.fb strong{font-family:var(--f-display);font-size:16px}
+.fb-slot{display:flex;flex-direction:column;gap:12px}
+.fb-slot:empty{display:none}
+
+/* match */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 13px;border-radius:99px;border:1.5px solid var(--ink);background:var(--surface);font-weight:700;font-size:14px;cursor:pointer}
+.chip.sel{background:var(--ink);color:var(--paper)}
+.chip.done{border-color:var(--good);background:var(--good-soft);color:var(--good);cursor:default}
+.defs{display:flex;flex-direction:column;gap:8px}
+.def{text-align:left;padding:12px 14px;border-radius:12px;border:1.5px dashed var(--line);background:var(--surface);cursor:pointer;font-size:14.5px;line-height:1.4}
+.def:hover:not(.done){border-color:var(--accent)}
+.def.done{border-style:solid;border-color:var(--good);background:var(--good-soft);cursor:default}
+.def.done small{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--good);margin-bottom:3px}
+.def.flash{border-color:var(--bad);border-style:solid;background:var(--bad-soft)}
+.hint{font-size:13.5px;color:var(--muted)}
+
+/* sort */
+.sorts{display:flex;flex-direction:column;gap:8px}
+.srow{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.srow .stext{font-size:14.5px;font-weight:700}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button{padding:8px 6px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font-size:13px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.srow.right{border-color:var(--good);background:var(--good-soft)}
+.srow.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.srow .verdict{font-size:12.5px;font-family:var(--f-mono);letter-spacing:.04em}
+
+/* order */
+.seq{display:flex;flex-direction:column;gap:6px;min-height:52px;border:1.5px dashed var(--line);border-radius:12px;padding:8px}
+.seq:empty::before{content:"Tap items below in the right order";color:var(--muted);font-size:14px;padding:8px}
+.seq button,.pool button{display:flex;gap:10px;align-items:center;text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font-size:14.5px;font-weight:700;width:100%}
+.seq button{border-color:var(--ink)}
+.seq button .n{font-family:var(--f-mono);font-size:12px;width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--paper);display:grid;place-items:center;flex-shrink:0}
+.seq button.right{border-color:var(--good);background:var(--good-soft)}
+.seq button.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.pool{display:flex;flex-direction:column;gap:6px}
+.answer-list{margin:0;padding-left:20px;font-size:14px}
+
+/* summary / tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:560px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tile b{display:block;font-family:var(--f-display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile span{font-size:12.5px;color:var(--muted)}
+.big{font-family:var(--f-display);font-size:56px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:44px minmax(0,1fr) 42px;gap:10px;align-items:center;font-size:13.5px}
+.bar .track2{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.bar .track2 i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.bar .v{font-family:var(--f-mono);font-size:12px;text-align:right;color:var(--muted)}
+.section-h{font-size:20px;font-weight:700}
+
+/* glossary & library */
+.search{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:16px}
+.search:focus{outline:none;border-color:var(--accent)}
+.glist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.gitem{padding:13px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.gitem:first-child{border-top:0}
+.gitem b{font-family:var(--f-display);font-size:16px}
+.gitem p{font-size:14.5px;color:var(--muted)}
+.gitem button{align-self:flex-start;background:none;border:0;padding:0;color:var(--accent);font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:2px}
+.letter{padding:6px 16px;background:var(--sunk);color:var(--muted)}
+.book{padding:13px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.book:first-child{border-top:0}
+.book b{font-family:var(--f-display);font-size:16px;line-height:1.25}
+.book .by{font-size:13px;color:var(--ink)}
+.book .by span{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-left:6px}
+.book p{font-size:14px;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:32px 16px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty b{font-family:var(--f-display);font-size:20px;color:var(--ink)}
+.qlist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.qlist div{padding:12px 16px;border-top:1px solid var(--line);font-size:14.5px;display:flex;gap:10px}
+.qlist div:first-child{border-top:0}
+.qlist .mono{color:var(--muted);flex-shrink:0;padding-top:3px}
+.segctl{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sunk);border-radius:12px;padding:4px}
+.segctl button{border:0;background:none;padding:9px;border-radius:9px;font-weight:700;cursor:pointer;font-size:14px}
+.segctl button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.steps-install{margin:0;padding-left:20px;font-size:14.5px;display:flex;flex-direction:column;gap:6px}
+
+.pop{position:fixed;z-index:50;top:calc(env(safe-area-inset-top,0px) + 66px);right:max(16px,env(safe-area-inset-right,0px));background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-weight:600;font-size:13px;padding:8px 12px;border-radius:10px;animation:pop 1.6s ease forwards;pointer-events:none}
+@keyframes pop{0%{opacity:0;transform:translateY(6px)}15%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+.fade{animation:fade .25s ease}
+@keyframes fade{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.warn{background:var(--bad-soft);border:1px solid var(--bad);border-radius:12px;padding:12px 14px;font-size:14.5px}
+.warn b{color:var(--bad)}
+.savebar{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}
+.savebar .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
+.savebar.no .dot{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.resume{display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--accent);background:var(--accent-soft);cursor:pointer}
+.resume .mono{color:var(--accent)}
+.resume b{font-family:var(--f-display);font-size:16.5px}
+.log{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.logrow{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.lcode{color:var(--muted)}
+.lmain{display:flex;flex-direction:column;min-width:0}
+.lmain b{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lpct{font-family:var(--f-mono);font-weight:600;font-size:13px;padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
+.lpct.hi{background:var(--good-soft);color:var(--good)}.lpct.mid{background:var(--signal-soft);color:var(--signal)}.lpct.lo{background:var(--bad-soft);color:var(--bad)}
+.codebox{width:100%;min-height:76px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);font-family:var(--f-mono);font-size:12px;line-height:1.4;resize:vertical;word-break:break-all}
+.codebox:focus{outline:none;border-color:var(--accent)}
+.divider{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.divider::before,.divider::after{content:"";flex:1;border-top:1.5px dashed var(--line)}
+label.btn{cursor:pointer}
+.top .iconbtn svg{width:19px;height:19px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main"></main>
+<nav class="tabs" aria-label="Sections"><div class="tabs-in" id="tabs"></div></nav>
+
+<script>
+/* ── CURRICULUM ──────────────────────────────────────────────────────────
+ step types: c = concept, q = multiple choice, m = match, s = sort, o = order
+──────────────────────────────────────────────────────────────────────── */
+const MODS = [
+/* ═══════════════ M01 ═══════════════ */
+{code:'M01', level:'Foundation', name:'What a service really is',
+desc:'From IHIP to service-dominant logic: the theory that explains why services must be designed as systems of value co-creation.',
+steps:[
+{t:'c', h:'Value is created in use, not in the factory',
+body:`Walk into a café. You pay for coffee, but what you experience is a sequence: finding the place, queueing, ordering, waiting, being handed a cup, sitting down. The coffee is one input. The <b>service</b> is the whole process through which the café applies its skills and resources for your benefit.<br><br>Vargo and Lusch define service as <b>the application of competences (knowledge and skills) for the benefit of another party</b>. On this view, a product is a vehicle for service: a car delivers a transport service that you co-produce every time you drive it.`,
+pts:[
+['Goods-dominant logic','Value is embedded in an output at the point of manufacture and exchanged for money. The firm creates value; the customer consumes or destroys it.'],
+['Service-dominant logic','Value only emerges when a beneficiary uses resources in their own context (value-in-use). The firm can only make value propositions.'],
+['Value proposition','A promise of potential value. Whether value is realised depends on the customer, their skills and their circumstances.']
+],
+note:`The practical shift is in what you design. Under goods logic you optimise the output. Under service logic you design the conditions for co-creation: what the customer must know, do and bring, and how your resources combine with theirs. A tax-filing service that is fast for an accountant and impossible for a first-time filer has the same output but very different value-in-use.`,
+refs:['Vargo & Lusch (2004), Evolving to a New Dominant Logic for Marketing, Journal of Marketing','Vargo & Lusch (2016), Institutions and axioms, JAMS']},
+
+{t:'c', h:'IHIP: useful prompts, weak definition',
+body:`Textbooks long described services with four characteristics, known as <b>IHIP</b>. Experts now treat these as design prompts rather than a definition, because many services break at least one of them.`,
+pts:[
+['Intangibility','You cannot inspect it before purchase. Design lever: evidencing, previews, guarantees, reviews.'],
+['Heterogeneity','Each delivery varies with people and context. Design lever: standardise the backstage, give the frontstage room to adapt.'],
+['Inseparability','Production and consumption overlap; the customer is present. Design lever: design the customer’s role as a co-producer.'],
+['Perishability','Unused capacity cannot be stored. Design lever: demand and capacity management through reservations, pricing and queue design.']
+],
+note:`Lovelock and Gummesson (2004) showed that IHIP fails as a definition. Software is highly standardised, recorded lectures can be stored, and repair work is done without the customer present. They proposed a <b>non-ownership</b> lens instead: in a service, customers gain access to or temporary use of labour, skills, facilities, networks or systems, without taking ownership. Rental, access and subscription models fit this lens well.`,
+refs:['Zeithaml, Parasuraman & Berry (1985), Problems and Strategies in Services Marketing','Lovelock & Gummesson (2004), Whither Services Marketing?, Journal of Service Research']},
+
+{t:'c', h:'The five axioms of service-dominant logic',
+body:`In their 2016 consolidation, Vargo and Lusch reduced their foundational premises to five axioms. Each one has a direct design consequence.`,
+pts:[
+['1. Service is the basis of exchange','People exchange service for service. Money and goods are intermediaries.'],
+['2. Value is co-created by multiple actors','Always including the beneficiary. A hospital stay involves patient, family, clinicians, insurers and pharmacies.'],
+['3. All actors are resource integrators','Customers bring knowledge, time, devices and networks. Design for what they actually bring.'],
+['4. Value is determined by the beneficiary','Uniquely and phenomenologically. The same service has different value for different people and situations.'],
+['5. Co-creation is coordinated through institutions','Rules, norms and shared meanings (queue etiquette, regulations, payment standards) shape how actors cooperate.']
+],
+ex:`Map the resources each actor integrates, not just the steps they take. If an online visa service assumes applicants own a scanner, have a stable address and read English fluently, those are resource assumptions that exclude real users.`,
+refs:['Vargo & Lusch (2016), Journal of the Academy of Marketing Science 44(1)']},
+
+{t:'c', h:'Two kinds of quality and the servicescape',
+body:`Christian Grönroos (1984) separated <b>technical quality</b> (what the customer receives) from <b>functional quality</b> (how it is delivered). Customers often cannot judge technical quality, such as the accuracy of a diagnosis, so functional quality dominates their evaluation.<br><br>Mary Jo Bitner (1992) named the physical environment of a service the <b>servicescape</b>. It shapes both customer and employee behaviour.`,
+pts:[
+['Ambient conditions','Temperature, noise, lighting, scent, music.'],
+['Space and function','Layout, equipment, furnishings and how well they support the task.'],
+['Signs, symbols, artefacts','Signage, décor, uniforms, documents: the cues people use to infer quality and rules.']
+],
+note:`Digital services have servicescapes too: page load time, layout, copy tone and error states are the ambient conditions and artefacts of an app. A design audit should cover both physical and digital environments in one pass.`,
+refs:['Grönroos (1984), European Journal of Marketing','Bitner (1992), Servicescapes, Journal of Marketing']},
+
+{t:'q', q:'Under service-dominant logic, who ultimately determines the value of a service?',
+o:['The provider, through its pricing','The beneficiary, in their own context of use','The regulator, through quality standards','The market, through competitor benchmarks'],
+a:1, x:'Axiom 4: value is always uniquely and phenomenologically determined by the beneficiary. Providers can only offer value propositions.'},
+
+{t:'q', q:'Lovelock and Gummesson argued IHIP does not hold for many services. What did they propose as the defining feature instead?',
+o:['Co-production by the customer','Non-ownership: access to resources without transfer of ownership','Labour intensity','Real-time delivery'],
+a:1, x:'The non-ownership paradigm treats services as rental or access to labour, skills, facilities, networks or systems. It covers cases IHIP cannot, such as stored digital content or remote repairs.'},
+
+{t:'m', q:'Match each IHIP characteristic to the design lever it suggests',
+pairs:[
+['Intangibility','Show proof before purchase: previews, reviews, guarantees'],
+['Heterogeneity','Standardise backstage routines, allow frontstage adaptation'],
+['Inseparability','Design the customer’s co-production role and skills'],
+['Perishability','Manage demand: reservations, off-peak pricing, queue design']
+]},
+
+{t:'s', q:'Sort these into operand and operant resources', ctx:'Operand resources are acted upon. Operant resources act on other resources to create value.',
+b:['Operand','Operant'],
+items:[['Hotel building',0],['Concierge’s local knowledge',1],['Raw ingredients',0],['Chef’s skill',1],['Hospital beds',0],['Patient’s knowledge of their own symptoms',1]],
+x:'Operant resources (skills, knowledge, relationships) are the primary source of competitive advantage in SD logic. Note that customers bring operant resources too.'},
+
+{t:'q', q:'Two clinics produce identical clinical outcomes. Patients rate one far higher because its staff explain each step and check understanding. Which concept explains the gap?',
+o:['Technical quality','Functional quality','Perishability','Physical evidence'],
+a:1, x:'Grönroos: functional quality is how the service is delivered. Because patients cannot judge clinical accuracy, the manner of delivery dominates their evaluation.'}
+]},
+
+/* ═══════════════ M02 ═══════════════ */
+{code:'M02', level:'Foundation', name:'Principles and mindsets',
+desc:'The 2010 and 2018 principles, evidencing and the labour illusion, and Lou Downe’s fifteen principles of good services.',
+steps:[
+{t:'c', h:'Five principles became six',
+body:`Many courses cite “six principles” from <i>This is Service Design Thinking</i>. That book (Stickdorn & Schneider, 2010) actually proposed <b>five</b>. The six come from the 2018 follow-up, <i>This is Service Design Doing</i>, which revised them.`,
+pts:[
+['2010: User-centred','Services are experienced through the customer’s eyes.'],
+['2010: Co-creative','All stakeholders are involved in design.'],
+['2010: Sequencing','A service is a rhythm of interrelated actions over time.'],
+['2010: Evidencing','Intangible services are made visible through physical artefacts.'],
+['2010: Holistic','The entire environment of a service is considered.']
+],
+note:`The 2018 set is <b>human-centred</b>, <b>collaborative</b>, <b>iterative</b>, <b>sequential</b>, <b>real</b> and <b>holistic</b>. “User” became “human” to include staff and every person affected. Evidencing stopped being a principle and remained a method. “Real” was added: research happens in reality, ideas are prototyped in reality, and intangible values are evidenced as physical or digital reality. Citing the right version is a quick signal of expertise.`,
+refs:['Stickdorn & Schneider (2010), This is Service Design Thinking','Stickdorn, Hormess, Lawrence & Schneider (2018), This is Service Design Doing']},
+
+{t:'c', h:'Evidencing and the labour illusion',
+body:`Much of a service happens backstage, so customers cannot see effort or care. <b>Evidencing</b> makes chosen parts of that work visible: the folded end of a hotel toilet roll, a “checked by” slip in a parcel, a delivery tracker.<br><br>Buell and Norton (2011) showed that people value a service more when it displays the work being done for them, even when they wait longer. They called this the <b>labour illusion</b>. A travel site that lists the airlines it is searching is perceived as more thorough than one that returns the same results instantly.`,
+note:`Evidencing has failure modes. Over-evidencing looks like padding the bill. Evidence that contradicts reality destroys trust faster than no evidence: a “cleaned hourly” sign above a dirty washbasin is worse than no sign. Buell’s later work on <b>operational transparency</b> also found effects in the other direction: when employees can see the customers they serve, their effort and quality improve.`,
+ex:`For each backstage step on a blueprint, ask three questions. Does the customer need to know this happened? Would knowing it reduce anxiety or increase perceived value? Can we show it honestly and cheaply?`,
+refs:['Buell & Norton (2011), The Labor Illusion, Management Science','Buell, Kim & Tsay (2017), Creating Reciprocal Value Through Operational Transparency']},
+
+{t:'c', h:'Fifteen principles of good services',
+body:`Lou Downe, former design director of the UK Government Digital Service, set out fifteen principles in <i>Good Services</i> (2020). They are written from the user’s side and work well as an audit checklist.`,
+pts:[
+['1–4','Easy to find. Clearly explains its purpose. Sets the expectations a user has of it. Enables each user to complete the outcome they set out to do.'],
+['5–8','Works in a way that’s familiar. Requires no prior knowledge to use. Agnostic to organisational structures. Requires as few steps as possible.'],
+['9–12','Consistent throughout. No dead ends. Usable by everyone, equally. Encourages the right behaviours from users and staff.'],
+['13–15','Responds to change quickly. Clearly explains why a decision has been made. Makes it easy to get human assistance.']
+],
+note:`Principle 7, “agnostic to organisational structures”, is the hardest to meet because it challenges how the organisation is built. It connects directly to Conway’s law, covered in M10.`,
+refs:['Downe (2020), Good Services: How to Design Services That Work, BIS Publishers']},
+
+{t:'q', q:'Which principle was added in 2018 to stress that research, prototyping and evidence should happen in the real world rather than in meeting rooms?',
+o:['Holistic','Sequential','Real','Collaborative'],
+a:2, x:'“Real” was new in This is Service Design Doing (2018). It sits alongside human-centred, collaborative, iterative, sequential and holistic.'},
+
+{t:'q', q:'A flight search shows “Checking 412 airlines…” with a live list for eight seconds. Users rate its results as better than an identical site that answers instantly. What explains this?',
+o:['Peak-end rule','The labour illusion','The recovery paradox','Choice overload'],
+a:1, x:'Buell and Norton’s labour illusion: visible effort raises perceived value, even at the cost of a longer wait.'},
+
+{t:'m', q:'Match each of Downe’s principles to the failure that breaks it',
+pairs:[
+['Easy to find','You only learn the service exists when a friend mentions it'],
+['Agnostic to organisational structures','You must contact three departments that each own one step'],
+['No dead ends','An error page with no next step and no contact route'],
+['Easy to get human assistance','The chatbot loops and never offers a person']
+]},
+
+{t:'q', q:'A home-cleaning firm leaves fourteen stickers, cards and checklists in a small flat after each visit. Customers start to suspect they are being overcharged. What is the lesson?',
+o:['Evidence should always be maximised','Evidence must be proportionate and credible; over-evidencing reads as padding','Physical evidence matters less than digital evidence','Customers dislike all evidence of backstage work'],
+a:1, x:'Evidencing is a calibration problem. Too little and the work is invisible; too much and it looks like justification for the price.'}
+]},
+
+/* ═══════════════ M03 ═══════════════ */
+{code:'M03', level:'Practitioner', name:'Design research with rigour',
+desc:'Choosing methods, sampling, triangulation, bias, synthesis and the ethics of research with people.',
+steps:[
+{t:'c', h:'Choosing methods: what people say vs what they do',
+body:`Research methods differ on two axes (Rohrer, 2014): <b>attitudinal vs behavioural</b> (what people say vs what they do) and <b>qualitative vs quantitative</b> (why vs how many). Service research leans on qualitative behavioural methods because the <b>say/do gap</b> is large: people misreport their own routines, especially habits, workarounds and emotionally loaded steps.`,
+pts:[
+['Contextual inquiry','Observe and interview in the place the work happens, using a master–apprentice stance (Beyer & Holtzblatt, 1998).'],
+['Shadowing','Follow a customer or employee through a real journey with minimal intervention.'],
+['Service safari','Researchers use the service, or comparable ones, themselves to build first-hand empathy.'],
+['Diary and mobile ethnography','Participants record moments over days or weeks. Good for long journeys such as onboarding or treatment.'],
+['Cultural probes','Kits of prompts and tasks that elicit inspiration rather than data (Gaver, Dunne & Pacenti, 1999).'],
+['Operational data','Complaints, call logs, analytics, staff notes. Cheap, large, and blind to why.']
+],
+note:`Mix methods deliberately. Analytics tell you where people drop off. Shadowing tells you why. A short survey then tells you how widespread the reason is. Each method covers another’s blind spot.`,
+refs:['Beyer & Holtzblatt (1998), Contextual Design','Rohrer (2014), When to Use Which User-Experience Research Methods, NN/g']},
+
+{t:'c', h:'Rigour: sampling, saturation, triangulation, bias',
+pts:[
+['Purposive sampling','Choose participants for the variety of experience they represent, not statistical representativeness. Include extremes: novices, experts, people with access needs, people who left.'],
+['Lead users','Users who face a need early and often build their own workarounds (von Hippel, 1986). Their hacks are prototypes.'],
+['Saturation','The point where new interviews add few new codes. Guest et al. (2006) found most themes appeared within about 12 interviews in a fairly homogeneous group. Diverse groups need more.'],
+['Triangulation','Cross-check findings across data sources, investigators, methods or theories (Denzin, 1978).'],
+['Common biases','Confirmation bias, leading questions, social desirability, the observer effect, and recruiting only easy-to-reach participants.']
+],
+note:`The most common failure in service research is not a bad method. It is a skewed sample: only current, digitally confident, satisfied customers who answer recruitment emails. People who abandoned the service, or never found it, hold the most useful insights.`,
+refs:['von Hippel (1986), Lead Users, Management Science','Guest, Bunce & Johnson (2006), How Many Interviews Are Enough?, Field Methods']},
+
+{t:'c', h:'Synthesis: from notes to insight',
+body:`Synthesis turns observations into a shared understanding the team can act on. Two well-documented approaches are <b>affinity diagramming</b> (from the KJ method of Jiro Kawakita) and <b>thematic analysis</b> (Braun & Clarke, 2006).`,
+pts:[
+['Observation','A factual note: “R4 printed the form, signed it, then photographed it to upload.”'],
+['Code','A short label for what is going on: “print-sign-scan workaround”.'],
+['Theme','A pattern across participants: “Digital signature is not trusted or not available.”'],
+['Insight','A theme plus its meaning for design: “Applicants distrust digital signing because they cannot see proof it was received, so they recreate a paper trail.”'],
+['How Might We','The insight reframed as a design question: “HMW give applicants proof of submission they trust as much as paper?”']
+],
+ex:`For needs, the job story format (popularised by Intercom) keeps context in view: <b>When</b> [situation], <b>I want to</b> [motivation], <b>so I can</b> [outcome]. It avoids persona attributes that do not drive behaviour.`,
+refs:['Braun & Clarke (2006), Using Thematic Analysis in Psychology','Christensen et al. (2016), Competing Against Luck']},
+
+{t:'c', h:'Personas, archetypes and jobs',
+body:`Alan Cooper introduced personas in <i>The Inmates Are Running the Asylum</i> (1999). A persona is a research-based composite of a user type, used to keep decisions anchored to real needs.`,
+pts:[
+['Weak persona','“29, Bengaluru, works in tech, uses mobile.” Demographics alone predict little about behaviour.'],
+['Strong persona','“Always ten minutes late, does everything on her phone, distrusts any process she cannot see, needs banking done in under three minutes.”'],
+['Behavioural archetype','Built from behaviours and mindsets that cut across demographics. Often more robust than personas for services.'],
+['Job to be done','The progress a person is trying to make in a circumstance. People “hire” services to get jobs done (Christensen).']
+],
+note:`Personas fail when they are invented in a workshop, when there are too many of them, or when they are never used to make a decision. If no design choice would change because of a persona, it is decoration.`},
+
+{t:'c', h:'Research ethics and operations',
+pts:[
+['Informed consent','Participants understand purpose, use of data, recording and their right to stop.'],
+['Vulnerable participants','Extra care with patients, children, people in crisis or in debt. Avoid re-traumatising questions; have support routes ready.'],
+['Data minimisation','Collect only what you need and delete on schedule. In India, the Digital Personal Data Protection Act 2023 sets consent and purpose-limitation duties; the EU GDPR does the same in Europe.'],
+['Fair compensation','Pay for time, especially for frontline staff and low-income participants.'],
+['Research operations','Shared recruitment panels, consent templates, repositories and tagging so insight is reusable across projects.']
+]},
+
+{t:'q', q:'Customers say in interviews that they always read the terms before buying. Analytics show 2% open them. What is the most appropriate next step?',
+o:['Trust the interviews; analytics are noisy','Trust the analytics and stop interviewing','Observe purchases in context to understand what people actually check and why','Send a survey asking whether they read the terms'],
+a:2, x:'This is the say/do gap. Behavioural observation shows what people do and why. A survey would only collect more attitudinal data.'},
+
+{t:'q', q:'A team combines interviews, call-centre logs and funnel analytics to confirm a drop-off cause. Which kind of triangulation is this?',
+o:['Investigator triangulation','Theory triangulation','Method (and data) triangulation','Sampling triangulation'],
+a:2, x:'Using different methods and data sources to test the same finding is method and data triangulation (Denzin).'},
+
+{t:'o', q:'Put the synthesis steps in order',
+items:['Raw observations','Codes','Clusters of codes','Themes','Insight statements','How Might We questions'],
+x:'Synthesis climbs from facts to meaning. Skipping steps usually produces “insights” that are just restated opinions.'},
+
+{t:'q', q:'Which is a well-formed job story?',
+o:['As a user, I want a dark mode so I can use the app','When I’m paying a bill on a crowded commute, I want to finish in one go, so I can stop worrying it will be late','Users aged 25–34 want faster payments','We need to build one-tap bill pay'],
+a:1, x:'A job story names the situation, the motivation and the outcome, and contains no solution.'},
+
+{t:'s', q:'Sort these methods by what they mainly reveal', b:['Behavioural','Attitudinal'],
+items:[['Shadowing a nurse for a shift',0],['Satisfaction survey',1],['Clickstream analytics',0],['Focus group about brand perception',1],['Diary photos of each moment of a treatment',0],['Card sort of what people value most',1]],
+x:'Behavioural methods capture what people do. Attitudinal methods capture what they say they think, prefer or value.'}
+]},
+
+/* ═══════════════ M04 ═══════════════ */
+{code:'M04', level:'Practitioner', name:'Journeys and moments that matter',
+desc:'Map types, journey anatomy, moments of truth, peak-end, Chase and Dasu’s rules, and journey management.',
+steps:[
+{t:'c', h:'A family of maps',
+body:`Jim Kalbach calls these <b>alignment diagrams</b>: visual artefacts that align an organisation with the experience of the people it serves. Pick the map that fits the question.`,
+pts:[
+['Customer journey map','One persona’s experience with one organisation over time.'],
+['Experience map','A human activity broader than any one provider, such as “moving house” or “having a baby”.'],
+['Service blueprint','The frontstage and backstage processes that produce a journey (M05).'],
+['Mental model diagram','People’s reasoning and motivations, aligned against the features that support them (Indi Young).'],
+['Ecosystem map','All actors and relationships around a service, including those outside the organisation.']
+],
+note:`Stickdorn et al. (2018) describe <b>zoom levels</b>: a lifecycle map spanning years, a journey spanning days, and a step-level map spanning minutes. Most mapping disputes are actually disagreements about zoom level.`,
+refs:['Kalbach (2020), Mapping Experiences, 2nd ed.','Young (2008), Mental Models']},
+
+{t:'c', h:'Anatomy of a journey map',
+fig:{t:'Typical lanes, top to bottom', rows:[
+['Stages','Phases named from the customer’s point of view'],
+['Steps','What the customer does at each stage'],
+['Touchpoints','Where and through which channel they interact'],
+['Thoughts','What they are trying to work out'],
+['Emotion curve','How they feel, step by step'],
+['Pain points','Where it breaks, with evidence'],
+['-','Below here: optional organisational lanes'],
+['Owners','Team accountable for each step'],
+['Metrics','How each step is measured today'],
+['Opportunities','How Might We questions per pain point']
+]},
+note:`Label every map as either <b>current state</b> (evidence-based) or <b>future state</b> (a hypothesis). An assumption-based map is a valid starting point only if it says so on the map and is then tested.`},
+
+{t:'c', h:'Moments of truth and the peak-end rule',
+body:`Jan Carlzon, CEO of SAS, popularised <b>moments of truth</b>: the brief encounters in which a customer forms an impression. Procter & Gamble later named the shelf (first moment) and use (second moment), and Google added the online research that precedes purchase (zero moment, 2011).<br><br>Psychology adds a sharper tool. In Redelmeier and Kahneman’s colonoscopy studies, patients’ retrospective ratings were driven by the most intense moment and the final moments, not by total duration. This is the <b>peak-end rule</b>, and its partner is <b>duration neglect</b>.`,
+pts:[
+['Chase & Dasu (2001): Finish strong','The end weighs most in memory. Design the last step deliberately.'],
+['Get the bad out early','Front-load unavoidable unpleasant steps so the ending can lift.'],
+['Segment pleasure, combine pain','Break good parts into several moments; bundle bad parts into one.'],
+['Build commitment through choice','People are more satisfied when they choose, even among small options.'],
+['Give people rituals','Repeated rituals create comfort and trust; keep them consistent.']
+],
+note:`Remembered experience drives repurchase and recommendation more than moment-by-moment experience. That does not license neglecting the middle: a terrible middle can become the peak.`,
+refs:['Carlzon (1987), Moments of Truth','Redelmeier & Kahneman (1996), Pain','Chase & Dasu (2001), HBR']},
+
+{t:'c', h:'Anti-patterns and journey management',
+pts:[
+['Happy path trap','Mapping only the ideal flow. Real journeys include errors, retries, workarounds and channel switching.'],
+['Inside-out stages','Stages named after departments (“Sales”, “Billing”) instead of what the customer is doing.'],
+['Map as deliverable','A beautiful poster that changes no decision. Maps are tools for alignment and prioritisation.'],
+['Average persona','Merging different users into one map hides the very differences that cause failure.']
+],
+note:`Mature organisations move from mapping to <b>journey management</b>: key journeys become operating units with a named owner, a cross-functional team, journey-level metrics and a backlog. The map becomes a living artefact linked to data rather than a one-off workshop output.`},
+
+{t:'q', q:'Arjun maps the ideal banking-app journey with no errors or retries. What is wrong?',
+o:['He should have used a blueprint instead','He has fallen into the happy path trap','He has too many stages','He should start with quantitative data'],
+a:1, x:'Most service failures, and most design opportunities, live in the unhappy paths: errors, timeouts, retries and channel switches.'},
+
+{t:'q', q:'Patients whose colonoscopy was extended with a few minutes of milder discomfort at the end later rated the whole procedure as less unpleasant. What does this show?',
+o:['Total pain predicts memory','The peak-end rule with duration neglect','The labour illusion','The zone of tolerance'],
+a:1, x:'Memory is shaped by the peak and the end. Adding a gentler ending improved the remembered experience despite a longer procedure.'},
+
+{t:'q', q:'A clinic visit includes a painful injection and a relaxed debrief with the doctor. Following Chase and Dasu, how should they be sequenced?',
+o:['Debrief first, injection last','Injection early, debrief at the end','Split the injection into several smaller moments','It does not matter'],
+a:1, x:'Get the bad out of the way early and finish strong. Note that splitting the pain into several moments would go against “combine the pain”.'},
+
+{t:'q', q:'A telecom’s journey map has the stages “Sales → Provisioning → Billing → Retention”. What is the problem?',
+o:['Too few stages','Stages are named inside-out, after departments','It lacks an emotion curve','It should start with awareness'],
+a:1, x:'Stages should describe what the customer is doing, such as “choose a plan” or “get connected”. Department names hide gaps between teams.'},
+
+{t:'m', q:'Match each map to its purpose',
+pairs:[
+['Customer journey map','One persona’s experience with one organisation over time'],
+['Experience map','An activity broader than any provider, like moving house'],
+['Service blueprint','The frontstage and backstage processes behind a journey'],
+['Ecosystem map','All actors and relationships around a service']
+]},
+
+{t:'s', q:'Riya pays a bill in her banking app. Sort the moments.', ctx:'She cannot find Payments (it is under Services), mis-taps twice, is timed out after three minutes, logs in again, gets a vague error, calls support, waits 12 minutes on hold, then pays successfully. The app itself opened instantly.',
+b:['Pain point','Working moment'],
+items:[['Payments hidden under Services',0],['Timeout after 3 minutes',0],['Vague error message',0],['12-minute hold',0],['App opened instantly',1],['Payment finally succeeds',1]],
+x:'Note the chain: poor navigation caused mis-taps, which caused the timeout, which caused the re-login. Fixing navigation removes three pain points at once.'}
+]},
+
+/* ═══════════════ M05 ═══════════════ */
+{code:'M05', level:'Practitioner', name:'Blueprints, ecosystems and capacity',
+desc:'Shostack’s blueprint, the three lines, fail and wait points, root-cause tracing, Little’s Law and the cost of full utilisation.',
+steps:[
+{t:'c', h:'The service blueprint',
+body:`G. Lynn Shostack introduced the blueprint in <i>How to Design a Service</i> (1982) and <i>Designing Services That Deliver</i> (HBR, 1984). Bitner, Ostrom and Morgan (2008) set out the form most practitioners use today. Where a journey map shows the experience, a blueprint shows the system that produces it.`,
+fig:{t:'Blueprint for a coffee shop', rows:[
+['Physical evidence','Menu board, cup with your name, receipt'],
+['Customer actions','Queues, orders, pays, waits, collects'],
+['-','Line of interaction'],
+['Frontstage','Barista takes the order, calls your name'],
+['-','Line of visibility'],
+['Backstage','Drink preparation, restocking milk'],
+['-','Line of internal interaction'],
+['Support processes','Point-of-sale system, inventory, staff rota']
+]},
+note:`Shostack’s original blueprints also showed <b>execution time</b> and the customer’s <b>tolerance time</b> at each step, plus marked <b>fail points</b>. Modern blueprints often drop time. Put it back: a blueprint without time cannot show where queues form.`,
+refs:['Shostack (1984), HBR 62(1)','Bitner, Ostrom & Morgan (2008), California Management Review 50(3)']},
+
+{t:'c', h:'Fail points, wait points and root causes',
+pts:[
+['Fail point','A step where things often go wrong. Mark it and design a recovery path.'],
+['Wait point','A step where the customer waits. Mark it with expected and tolerable time.'],
+['Root-cause tracing','Start from a frontstage symptom and follow arrows down through backstage and support until you reach the cause.'],
+['Five whys','Ask “why?” repeatedly at each layer (from the Toyota Production System) to avoid fixing symptoms.']
+],
+ex:`A guest complains about slow room service (customer layer). The waiter is apologetic (frontstage). The kitchen is waiting for orders (backstage). Orders are batched by an old ordering system every ten minutes (support). Retraining the waiter would fix nothing.`,
+note:`Most service failures start backstage and appear frontstage. Blueprints are valuable because they make that chain visible to people who each own only one layer.`},
+
+{t:'c', h:'Capacity: Little’s Law and the utilisation trap',
+body:`Perishability makes capacity a design material. Two results from queueing theory belong in every service designer’s toolkit.`,
+pts:[
+['Little’s Law','L = λW. The average number of people in a system equals the arrival rate times the average time each spends there. It holds for any stable system.'],
+['Utilisation','The share of time a server is busy. Managers often push it toward 100%.'],
+['Kingman’s approximation','Waiting time grows roughly with ρ/(1−ρ), where ρ is utilisation. At 80% that factor is 4; at 95% it is 19.']
+],
+note:`The practical lesson: a service run near full utilisation has explosive, unpredictable queues, because variability has no slack to absorb it. Designing in slack, reducing variability (appointments, triage, standard work) and giving accurate wait information are all service design decisions, not just operations decisions.`,
+refs:['Little (1961), Operations Research','Kingman (1961), The single server queue in heavy traffic']},
+
+{t:'c', h:'Beyond the blueprint: ecosystems and value networks',
+body:`A blueprint centres on one provider. Many services depend on actors the organisation does not control: payment networks, couriers, regulators, families and carers.`,
+pts:[
+['Stakeholder map','Who is involved and how much they influence or are affected by the service.'],
+['Ecosystem map','Actors in concentric rings around the customer, with exchanges between them.'],
+['Value network map','The flows of money, information, goods and trust between actors.']
+],
+ex:`When a hospital discharge fails, the cause is often outside the hospital: no pharmacy stock, no home-care slot, no family member briefed. An ecosystem map makes those dependencies visible and assignable.`},
+
+{t:'q', q:'At a hotel, the chef cooking your meal is an example of:',
+o:['Physical evidence','Customer action','A backstage action','A support process'],
+a:2, x:'The chef is a contact employee working behind the line of visibility. The ordering system or rota would be support processes.'},
+
+{t:'q', q:'Which line separates backstage employee actions from support processes?',
+o:['Line of interaction','Line of visibility','Line of internal interaction','Line of implementation'],
+a:2, x:'The line of internal interaction marks where contact staff hand off to internal support functions such as IT, procurement and HR.'},
+
+{t:'q', q:'Room-service complaints trace back to an ordering system that batches orders every ten minutes. Where is the root cause on the blueprint?',
+o:['Physical evidence','Frontstage','Backstage','Support processes'],
+a:3, x:'The symptom is frontstage, the cause is in support. Tracing it is the main diagnostic use of a blueprint.'},
+
+{t:'q', q:'A passport office receives 30 applicants per hour, and each spends on average 20 minutes inside. How many applicants are inside on average?',
+o:['6','10','20','60'],
+a:1, x:'Little’s Law: L = λW = 30 per hour × 1/3 hour = 10 people. Use it to size waiting areas and staffing.'},
+
+{t:'q', q:'A clinic pushes clinician utilisation from 80% to 95%. With everything else unchanged, what happens to average waiting time?',
+o:['Falls slightly','Rises by about 15%','Roughly quintuples','Stays the same'],
+a:2, x:'ρ/(1−ρ) goes from 4 to 19, almost five times as large. High utilisation feels efficient but produces long, volatile queues.'},
+
+{t:'m', q:'Match each blueprint layer to a coffee-shop example',
+pairs:[
+['Physical evidence','The paper cup with your name on it'],
+['Frontstage action','Barista calls your name when the order is ready'],
+['Backstage action','Steaming milk out of the customer’s sight'],
+['Support process','Point-of-sale system processing the payment']
+]}
+]},
+
+/* ═══════════════ M06 ═══════════════ */
+{code:'M06', level:'Practitioner', name:'Process models and framing',
+desc:'The Double Diamond and its 2019 update, problem–solution co-evolution, How Might We, and choosing between process models.',
+steps:[
+{t:'c', h:'The Double Diamond',
+body:`Introduced by the UK Design Council in 2004, the Double Diamond shows design as two rounds of divergent and convergent thinking. The first finds the right problem; the second finds the right solution.`,
+pts:[
+['Discover','Research widely. Understand the problem space before solving.'],
+['Define','Synthesise into a clear challenge. The real problem often differs from the brief.'],
+['Develop','Generate many responses, co-design, prototype.'],
+['Deliver','Test, reject what fails, improve what works, launch.']
+],
+note:`In 2019 the Design Council published the <b>Framework for Innovation</b>, placing the diamonds inside four design principles (put people first; communicate visually and inclusively; collaborate and co-create; iterate, iterate, iterate), a methods bank, and the roles of engagement and leadership. The diamonds are not a linear sequence. Teams loop back whenever testing reveals they framed the problem wrongly.`,
+refs:['Design Council (2005), Eleven lessons','Design Council (2019), Framework for Innovation']},
+
+{t:'c', h:'Problems and solutions co-evolve',
+body:`Dorst and Cross (2001) observed that expert designers do not fix the problem first and then solve it. Problem and solution develop together: a partial solution reveals something about the problem, which reshapes the next solution. Kees Dorst later developed this into <b>frame innovation</b> (2015): progress often comes from reframing the situation rather than optimising inside the given frame.`,
+ex:`A city brief says “reduce crime in the nightlife district”. Reframed as “host a large, happy music festival every weekend”, the work shifts to lighting, toilets, transport home and stewards. Dorst describes a case of this kind from Sydney’s Kings Cross.`,
+refs:['Dorst & Cross (2001), Design Studies 22(5)','Dorst (2015), Frame Innovation, MIT Press']},
+
+{t:'c', h:'How Might We: calibrating the question',
+body:`The “How Might We” format is usually credited to Min Basadur’s work at Procter & Gamble in the 1970s and was later spread by IDEO. <b>How</b> assumes a solution exists, <b>might</b> permits exploration, <b>we</b> makes it shared.`,
+pts:[
+['Too broad','“HMW redesign urban transport?” No useful starting point.'],
+['Too narrow','“HMW add a countdown banner to the app?” A solution in disguise.'],
+['Well calibrated','“HMW help late commuters get home confidently when the last train is at risk?” Specific person, situation and outcome, open on solution.']
+],
+note:`Generate several HMWs from one insight by changing the lens: amplify the good, remove the bad, flip the assumption, change the status quo, or borrow an analogy from another domain.`},
+
+{t:'c', h:'Other process models, and when to use them',
+pts:[
+['Stickdorn et al. (2018)','Research, ideation, prototyping, implementation: iterative loops, not stages.'],
+['Stanford d.school','Empathise, define, ideate, prototype, test.'],
+['IDEO HCD','Inspiration, ideation, implementation.'],
+['Design Sprint (Knapp, GV, 2016)','Five days: map, sketch, decide, prototype, test. Good for a bounded question; poor for discovery of an unknown problem space.'],
+['Lean Startup (Ries, 2011)','Build, measure, learn. Strong on validated learning, weaker on deep research.']
+],
+note:`A process model is mostly a communication device. Choose the one your stakeholders will understand and that fits the uncertainty: open problem spaces need a long Discover; well-understood problems can go straight to a sprint.`},
+
+{t:'q', q:'A startup builds features from the founders’ assumptions with no user research. Which mistake is this?',
+o:['Moving too slowly through the second diamond','Skipping the first diamond and solving an unverified problem','Not prototyping enough','Creating personas too late'],
+a:1, x:'Without Discover and Define, a team can execute brilliantly on the wrong problem. It is the most expensive mistake in design.'},
+
+{t:'q', q:'Insight: “Elderly patients forget medication when their routine is disrupted.” Which HMW is best calibrated?',
+o:['HMW fix healthcare for older people?','HMW build a pill-reminder app?','HMW help older patients keep their medication routine when their day is disrupted?','Why do patients forget medication?'],
+a:2, x:'It names the person, the situation and the outcome, and leaves the solution open. The others are too broad, a disguised solution, or not a HMW.'},
+
+{t:'q', q:'As prototypes evolve, your team keeps changing its problem definition. What does design research say?',
+o:['The team lacked discipline in Define','This is normal; problem and solution co-evolve','The project should restart','The Double Diamond forbids this'],
+a:1, x:'Dorst and Cross found that problem and solution develop together in expert design. The 2019 framework also stresses iteration across both diamonds.'},
+
+{t:'o', q:'Order the days of a Design Sprint',
+items:['Map the problem','Sketch solutions','Decide','Prototype','Test with users'],
+x:'Knapp et al. (2016). Monday maps the challenge, Friday tests a realistic prototype with five users.'},
+
+{t:'m', q:'Match each activity to its Double Diamond phase',
+pairs:[
+['Discover','Shadowing shoppers in a supermarket for three days'],
+['Define','Writing insight statements and HMW questions'],
+['Develop','Bodystorming five rough concepts with the team'],
+['Deliver','Piloting the chosen concept in two stores and measuring']
+]}
+]},
+
+/* ═══════════════ M07 ═══════════════ */
+{code:'M07', level:'Practitioner', name:'Prototyping and testing services',
+desc:'What prototypes prototype, service-specific methods, hypothesis-driven testing, and why pilots fail at scale.',
+steps:[
+{t:'c', h:'What do prototypes prototype?',
+body:`Services unfold over time, involve several people, and happen in places. That makes them harder to prototype than screens. Houde and Hill (1997) offer a useful model: every prototype explores one or more of three questions.`,
+pts:[
+['Role','What the service does in someone’s life. Storyboards, scenarios, role-play.'],
+['Look and feel','What it is like to experience. Evidence prototypes, environments, scripts.'],
+['Implementation','Whether it can work. Technical spikes, operational pilots.'],
+['Integration','A prototype that combines all three; expensive and late.']
+],
+note:`State which question a prototype answers before building it. Teams waste effort building high-fidelity look-and-feel when the open question is still role.`,
+refs:['Houde & Hill (1997), What Do Prototypes Prototype?, Handbook of HCI']},
+
+{t:'c', h:'Service prototyping methods',
+pts:[
+['Desktop walkthrough','A small-scale model of the space with figures moved through the journey. Cheap and fast for flows and handoffs.'],
+['Investigative rehearsal','Staff act out a scene; the audience stops it and tries alternatives. Adapted from Augusto Boal’s Forum Theatre.'],
+['Bodystorming','Ideating physically in a real or mocked-up setting.'],
+['Wizard of Oz','A person secretly performs what the system will later automate.'],
+['Concierge test','The service is delivered manually and openly to a few customers to learn what they value.'],
+['Evidence prototype','Fake leaflets, emails, letters or adverts that test the promise before the service exists.'],
+['Pilot','The service runs for real, with real customers, at limited scope.']
+]},
+
+{t:'c', h:'Hypotheses, measurement and scale',
+body:`Treat each prototype as an experiment. A test card makes the logic explicit: <b>We believe</b> [assumption]. <b>To verify, we will</b> [test]. <b>We will measure</b> [metric]. <b>We are right if</b> [criterion].`,
+note:`Pilots often succeed and then fail at scale. The pilot was run by the most motivated staff, with extra attention and workarounds that never appear on a blueprint. Before scaling, check the operating model: training, systems, incentives, staffing ratios and the capacity of support functions. A pilot should test operational feasibility, not just customer appeal.`,
+ex:`Fake-door tests (a button for a service that does not exist yet) are useful but carry an ethical cost: they disappoint people. Tell users honestly what happened and limit exposure.`},
+
+{t:'q', q:'A bank wants to know whether customers value an assistant that disputes bills for them, before building any AI. Staff answer the chats behind the scenes. Which method is this?',
+o:['Desktop walkthrough','Wizard of Oz','Evidence prototype','Investigative rehearsal'],
+a:1, x:'In a Wizard of Oz test, people perform what the system will later do, so you can test value before investing in technology.'},
+
+{t:'q', q:'A paper storyboard of a hospital discharge, shown to nurses, mainly explores which dimension?',
+o:['Role','Look and feel','Implementation','Integration'],
+a:0, x:'A storyboard tests what the service does in people’s lives and work. It says little about how it feels or whether it is technically feasible.'},
+
+{t:'m', q:'Match each method to its use',
+pairs:[
+['Desktop walkthrough','Moving figures through a tabletop model of a branch'],
+['Investigative rehearsal','Staff replay a tense complaint scene and try alternatives'],
+['Evidence prototype','A mock leaflet and confirmation email tested before launch'],
+['Pilot','Running the new process in two branches for eight weeks']
+]},
+
+{t:'q', q:'A redesigned onboarding process delighted customers in a two-branch pilot, then failed in national rollout. What is the most likely cause?',
+o:['Customers in other regions have different needs','The pilot relied on motivated staff and workarounds; the operating model was never designed for scale','The pilot was too short','The national team used a different process model'],
+a:1, x:'Pilots often test appeal, not operability. Scaling needs training, systems, incentives and support capacity designed alongside the frontstage.'}
+]},
+
+/* ═══════════════ M08 ═══════════════ */
+{code:'M08', level:'Expert', name:'The psychology of service',
+desc:'Expectations and the zone of tolerance, the Kano model, Maister’s waiting propositions, justice theory and the recovery paradox.',
+steps:[
+{t:'c', h:'Expectations and the zone of tolerance',
+body:`Zeithaml, Berry and Parasuraman (1993) showed that customers hold two expectation levels: <b>desired service</b> (what they hope for) and <b>adequate service</b> (what they will accept). Between them lies the <b>zone of tolerance</b>.`,
+pts:[
+['Below adequate','Dissatisfaction, complaints, switching.'],
+['Within the zone','Acceptance. Improvements here are barely noticed.'],
+['Above desired','Delight, often remembered and shared.'],
+['What sets expectations','Explicit promises (adverts, contracts), implicit promises (price, premises), word of mouth, past experience.']
+],
+note:`The zone narrows for attributes people care about most and widens when they understand the reasons for a problem. That is why explaining delays works: it lowers the adequate level and widens tolerance.`},
+
+{t:'c', h:'The Kano model',
+body:`Noriaki Kano (1984) classified attributes by how their presence or absence affects satisfaction.`,
+pts:[
+['Must-be','Expected. Absence causes anger; presence goes unnoticed. A clean hotel room.'],
+['One-dimensional (performance)','More is better, linearly. Faster delivery.'],
+['Attractive','Unexpected delighters. Absence is fine; presence delights.'],
+['Indifferent','Nobody cares either way.'],
+['Reverse','Some people prefer it absent, such as heavy personalisation.']
+],
+note:`Attributes decay over time. Hotel Wi-Fi was attractive in 2005 and is now must-be. A roadmap built only on delighters will see them become hygiene factors that must be maintained forever.`},
+
+{t:'c', h:'The psychology of waiting',
+body:`David Maister’s 1985 paper proposed eight propositions that still guide queue design.`,
+pts:[
+['1','Occupied time feels shorter than unoccupied time.'],
+['2','Pre-process waits feel longer than in-process waits.'],
+['3','Anxiety makes waits seem longer.'],
+['4','Uncertain waits are longer than known, finite waits.'],
+['5','Unexplained waits are longer than explained waits.'],
+['6','Unfair waits are longer than equitable waits.'],
+['7','The more valuable the service, the longer people will wait.'],
+['8','Solo waiting feels longer than group waiting.']
+],
+note:`Maister also gave the “first law of service”: satisfaction equals perception minus expectation. Waiting design therefore works on both sides: change how the wait is perceived, and set accurate expectations.`,
+refs:['Maister (1985), The Psychology of Waiting Lines']},
+
+{t:'c', h:'Failure, justice and recovery',
+body:`When a service fails, customers judge the recovery on three kinds of fairness (Tax, Brown & Chandrashekaran, 1998).`,
+pts:[
+['Distributive justice','Was the outcome fair? Refund, replacement, compensation.'],
+['Procedural justice','Was the process fair? Speed, flexibility, not having to repeat yourself.'],
+['Interactional justice','Was I treated fairly? Apology, empathy, explanation, respect.']
+],
+note:`The <b>service recovery paradox</b> (McCollough & Bharadwaj, 1992) claims an excellent recovery can leave customers more satisfied than if nothing had failed. Meta-analysis (de Matos, Henrique & Rossi, 2007) found the effect on satisfaction but not on repurchase intention or word of mouth, and it rarely survives a second failure. Design to prevent failure first; design recovery as a strong safety net, not a strategy.`,
+refs:['Tax, Brown & Chandrashekaran (1998), Journal of Marketing','de Matos et al. (2007), Journal of Service Research']},
+
+{t:'c', h:'Behavioural design in services',
+pts:[
+['Defaults','Most people keep the default. Opt-out pension enrolment raises participation dramatically (Thaler & Sunstein, 2008).'],
+['EAST','The Behavioural Insights Team’s framework: make it Easy, Attractive, Social, Timely.'],
+['Friction as a tool','Remove friction from good actions; add it deliberately where people may regret acting fast.'],
+['Choice architecture','The order, framing and number of options shape decisions. Too many choices can stall them.']
+],
+note:`Behavioural levers are powerful and therefore ethically loaded. The test is whether the person, fully informed, would endorse the nudge. If not, it drifts into deceptive design (M11).`},
+
+{t:'q', q:'An app replaces “Please wait” with “You are 4th in line, about 6 minutes.” Which proposition does this apply?',
+o:['Occupied time feels shorter','Uncertain waits feel longer than known waits','Group waits feel shorter','Valuable services justify longer waits'],
+a:1, x:'Making the wait known and finite reduces perceived length. It also reduces anxiety, proposition 3.'},
+
+{t:'m', q:'Match each situation to Maister’s proposition',
+pairs:[
+['Menus handed out while you wait for a table','Occupied time feels shorter'],
+['Patients waiting for biopsy results','Anxiety makes waits seem longer'],
+['Someone who arrived later is served first','Unfair waits feel longer'],
+['A pilot announces the reason for the delay','Explained waits feel shorter']
+]},
+
+{t:'q', q:'A customer gets a full refund, but the agent is curt and makes them repeat their story twice. Which justice dimensions failed?',
+o:['Distributive only','Procedural and interactional','Distributive and procedural','None; the refund resolves it'],
+a:1, x:'The outcome was fair (distributive). Repeating the story is a procedural failure; curtness is an interactional one.'},
+
+{t:'q', q:'In which Kano category does hotel Wi-Fi sit today, for most travellers?',
+o:['Attractive','Indifferent','Must-be','Reverse'],
+a:2, x:'Once a delighter, now expected. Its absence causes anger; its presence earns no credit.'},
+
+{t:'q', q:'A team proposes to “design great recovery moments” rather than fix recurring failures, citing the recovery paradox. What is the best response?',
+o:['Agree; recovery creates more loyalty than reliability','Disagree; evidence shows the effect on satisfaction but weak or no effect on repurchase, and it rarely survives repeated failures','Agree, but only for premium customers','Disagree; recovery has no effect at all'],
+a:1, x:'Meta-analytic evidence supports a satisfaction effect only. Reliability remains the strongest driver of quality perceptions.'},
+
+{t:'q', q:'Adequate delivery is “within 2 days” and desired is “same day”. The parcel arrives in 36 hours. What should you expect?',
+o:['Delight','Acceptance within the zone of tolerance','Dissatisfaction','A recovery paradox'],
+a:1, x:'Performance between adequate and desired lands inside the zone of tolerance: acceptable, rarely remembered.'}
+]},
+
+/* ═══════════════ M09 ═══════════════ */
+{code:'M09', level:'Expert', name:'Measuring service quality',
+desc:'The gaps model, SERVQUAL and its critics, NPS and CES, failure demand, HEART and Goodhart’s law.',
+steps:[
+{t:'c', h:'The gaps model',
+body:`Parasuraman, Zeithaml and Berry (1985) explained poor quality as the result of four internal gaps that add up to the gap customers feel.`,
+fig:{t:'Five gaps', rows:[
+['Gap 5 — Customer gap','Expected service vs perceived service. What customers feel.'],
+['-','Caused by the four provider gaps below'],
+['Gap 1 — Listening','Customer expectations vs management’s perception of them'],
+['Gap 2 — Design and standards','Management’s perception vs the service standards set'],
+['Gap 3 — Performance','Standards vs the service actually delivered'],
+['Gap 4 — Communication','Service delivered vs what external communication promised']
+]},
+note:`The gaps model is a diagnostic map for service designers. Research closes gap 1, blueprints and standards close gap 2, operating model and staff enablement close gap 3, and honest marketing closes gap 4.`,
+refs:['Parasuraman, Zeithaml & Berry (1985), Journal of Marketing 49(4)']},
+
+{t:'c', h:'SERVQUAL and its critics',
+body:`SERVQUAL (1988) measures quality as <b>perception minus expectation</b> across 22 items in five dimensions, known as RATER.`,
+pts:[
+['Reliability','Delivering the promised service dependably and accurately. Usually the most important dimension.'],
+['Assurance','Knowledge and courtesy of staff, and their ability to inspire trust.'],
+['Tangibles','Facilities, equipment, staff appearance, communication materials.'],
+['Empathy','Caring, individual attention.'],
+['Responsiveness','Willingness to help and prompt service.']
+],
+note:`Critics found problems. Cronin and Taylor (1992) showed that a perceptions-only scale, <b>SERVPERF</b>, predicted overall quality better than difference scores. Carman (1990) found the five dimensions did not replicate cleanly across industries. Practitioners now use RATER as a coding frame for complaints and research, and adapt items to the context.`,
+refs:['Parasuraman, Zeithaml & Berry (1988), Journal of Retailing','Cronin & Taylor (1992), Journal of Marketing']},
+
+{t:'c', h:'NPS, CSAT and CES',
+pts:[
+['NPS (Reichheld, 2003)','“How likely are you to recommend us to a friend or colleague?” 0–10. Promoters 9–10, passives 7–8, detractors 0–6. NPS = % promoters − % detractors, from −100 to +100.'],
+['NPS critique','Keiningham et al. (2007) found no evidence that NPS predicts growth better than other satisfaction measures. Collapsing an 11-point scale also discards information.'],
+['CSAT','Satisfaction with a specific interaction. Useful at touchpoint level.'],
+['CES (Dixon, Freeman & Toman, 2010)','How much effort it took to get an issue resolved. Their research found reducing effort predicts loyalty better than delighting.']
+],
+note:`Relationship metrics tell you something is wrong, not what. Pair every survey metric with a behavioural metric on the same journey: completion rate, time to outcome, repeat contact, drop-off point.`},
+
+{t:'c', h:'Failure demand and Goodhart’s law',
+body:`John Seddon (Vanguard) distinguishes <b>value demand</b>, which is what the service exists for, from <b>failure demand</b>: demand caused by a failure to do something, or to do it right, for the customer. In many public and financial services, failure demand is a large share of contact volume.`,
+pts:[
+['Value demand','“I want to open an account.”'],
+['Failure demand','“Where is my refund?”, “What does this letter mean?”, “I’m calling again because it’s still broken.”'],
+['Goodhart’s law','When a measure becomes a target, it ceases to be a good measure.'],
+['HEART (Rodden et al., Google, 2010)','Happiness, Engagement, Adoption, Retention, Task success, each broken into goals, signals and metrics.']
+],
+note:`Measuring failure demand turns a cost conversation into a design conversation: every failure-demand call is evidence of a specific upstream design flaw.`,
+refs:['Seddon (2003), Freedom from Command and Control','Rodden, Hutchinson & Fu (2010), CHI']},
+
+{t:'q', q:'A bank agent is polite and knowledgeable, but a simple issue takes 45 minutes. Which RATER dimension is failing most?',
+o:['Assurance','Reliability','Responsiveness','Empathy'],
+a:2, x:'Knowledge and courtesy (assurance) were fine. Promptness, which is responsiveness, failed.'},
+
+{t:'q', q:'A survey gives 50% promoters, 30% passives and 20% detractors. What is the NPS?',
+o:['+30','+50','+80','+70'],
+a:0, x:'50 − 20 = +30. Passives count in the base but not in the formula.'},
+
+{t:'q', q:'A hotel website shows newly renovated rooms, but most rooms are not renovated. Which gap is this?',
+o:['Gap 1 — Listening','Gap 2 — Standards','Gap 3 — Performance','Gap 4 — Communication'],
+a:3, x:'External communication promised more than the service delivers. Gap 4 raises expectations and so widens gap 5.'},
+
+{t:'s', q:'Sort these contacts into value demand and failure demand', b:['Value','Failure'],
+items:[['Request to open a new account',0],['“Where is my refund?”',1],['Second call because the first fix did not work',1],['Customer wants to upgrade their plan',0],['Email asking what a letter means',1],['Booking a first appointment',0]],
+x:'Failure demand points to upstream fixes: clearer letters, proactive status updates, right-first-time resolution.'},
+
+{t:'q', q:'A call centre is targeted on average handle time under four minutes. Transfers and repeat calls rise sharply. What happened?',
+o:['Staff need more training','Goodhart’s law: the target distorted behaviour; measure end-to-end resolution instead','Customers became more demanding','The target was too lenient'],
+a:1, x:'Agents optimised the number by ending or transferring calls. First-contact resolution and failure demand reveal the real effect.'},
+
+{t:'m', q:'Match each complaint to the RATER dimension it violates',
+pairs:[
+['Reliability','“You said two days. It has been a week.”'],
+['Empathy','“The agent kept interrupting me to read the script.”'],
+['Tangibles','“The waiting room was dirty and the leaflets were out of date.”'],
+['Assurance','“The agent did not seem to understand the product.”']
+]}
+]},
+
+/* ═══════════════ M10 ═══════════════ */
+{code:'M10', level:'Expert', name:'Organisations, policy and scale',
+desc:'Design maturity, the service-profit chain, Conway’s law, service ownership, and how government made service design operational.',
+steps:[
+{t:'c', h:'Design maturity',
+body:`The Danish Design Centre’s <b>Design Ladder</b> (2001) describes four levels of design use in organisations.`,
+pts:[
+['1. No design','Design is not used or is invisible.'],
+['2. Design as styling','Design is the final look and finish.'],
+['3. Design as process','Design methods are built into development.'],
+['4. Design as strategy','Design shapes the business concept and direction.']
+],
+note:`Service design rarely delivers its full value at levels 1 or 2, because the levers it reveals (operating model, policy, incentives) sit above the project. Moving up the ladder requires executive sponsorship and the ability to change things outside the design team’s scope.`},
+
+{t:'c', h:'The service-profit chain',
+body:`Heskett and colleagues (HBR, 1994) linked internal conditions for employees to customer loyalty and profit.`,
+fig:{t:'Links in the chain', rows:[
+['Internal service quality','Tools, training, workplace design, policies'],
+['Employee satisfaction','Leads to retention and productivity'],
+['External service value','What customers receive'],
+['Customer satisfaction','Leads to loyalty'],
+['Revenue and profit','Growth from retained, referring customers']
+]},
+note:`The practical implication is <b>employee experience as service infrastructure</b>. If staff fight their own systems, customers will feel it. Blueprint the employee journey with the same care as the customer journey, and give frontline staff discretion to fix problems.`,
+refs:['Heskett et al. (1994), Putting the Service-Profit Chain to Work, HBR']},
+
+{t:'c', h:'Conway’s law and service ownership',
+body:`Melvin Conway (1968) observed that organisations design systems that mirror their own communication structures. In services this shows up as an app with separate sections, logins and help numbers for each product division.`,
+pts:[
+['Inverse Conway manoeuvre','Shape teams around the journeys you want customers to have.'],
+['Service owner','One accountable person for a service end to end, across channels and departments.'],
+['Journey team','A cross-functional team (design, engineering, operations, policy) owning a journey and its metrics.'],
+['DesignOps','The people, tools and processes that let design work scale: research operations, design systems, governance.']
+]},
+
+{t:'c', h:'Government as a service designer',
+body:`Martha Lane Fox’s 2010 review of Directgov recommended a central digital team. The UK Government Digital Service (GDS) was formed in 2011, and GOV.UK launched in 2012, replacing hundreds of departmental sites. It won the Design Museum’s Design of the Year in 2013.`,
+pts:[
+['Phases','Discovery, alpha, beta, live, with assessments against a service standard at each gate.'],
+['Service Standard (2019)','Fourteen points, starting with: understand users and their needs; solve a whole problem for users; provide a joined-up experience across all channels; make the service simple to use; make sure everyone can use it.'],
+['Policy as material','Teams such as the UK Policy Lab (2014) treat policy itself as something to prototype with citizens.']
+],
+note:`Similar models followed: the US Digital Service (2014) after the Healthcare.gov launch failure, Canada’s CDS, and many city and state teams. The lesson is that service quality is governed through standards, phase gates and multidisciplinary teams, not only through design talent.`,
+refs:['GDS (2019), Service Standard','Downe (2020), Good Services']},
+
+{t:'q', q:'A bank app has separate sections for cards, loans and savings, each with its own login flow and help number. What best explains this?',
+o:['Too little user research','Conway’s law: the service mirrors the organisation’s structure','Kano decay','A gap 4 communication problem'],
+a:1, x:'The structure of the service reflects the structure of the teams that built it. The fix is organisational: journey-aligned teams and service ownership.'},
+
+{t:'o', q:'Order the links of the service-profit chain',
+items:['Internal service quality','Employee satisfaction','Employee retention and productivity','External service value','Customer satisfaction','Customer loyalty','Revenue growth and profit'],
+x:'Heskett et al. (1994). The chain starts inside the organisation.'},
+
+{t:'o', q:'Order the phases of a GOV.UK-style service lifecycle',
+items:['Discovery','Alpha','Beta','Live'],
+x:'Discovery explores the problem, alpha tests riskiest assumptions with prototypes, beta runs a real service with users, live improves it continuously.'},
+
+{t:'q', q:'A firm hires designers who mostly polish screens at the end of projects. On the Danish Design Ladder, where is it?',
+o:['No design','Design as styling','Design as process','Design as strategy'],
+a:1, x:'Design applied only as final form and finish is step 2.'},
+
+{t:'q', q:'A benefits service is split so that applying, reporting changes and appealing each go to a different department with different forms. Which Service Standard point does it most clearly fail?',
+o:['Choose the right tools and technology','Solve a whole problem for users','Make new source code open','Operate a reliable service'],
+a:1, x:'Users experience one problem, “get the support I am entitled to”. The service should be framed around that, not around departmental boundaries.'}
+]},
+
+/* ═══════════════ M11 ═══════════════ */
+{code:'M11', level:'Expert', name:'Systems, ethics and the frontier',
+desc:'Leverage points, wicked problems, inclusive design, deceptive patterns and designing services with automation and AI.',
+steps:[
+{t:'c', h:'Systems thinking for services',
+body:`Services sit inside larger systems of policy, markets and behaviour. Donella Meadows (1999) ranked <b>leverage points</b>, places to intervene in a system, from least to most powerful.`,
+pts:[
+['Weak','Parameters and numbers: fees, staffing levels, subsidies.'],
+['Medium','Buffers, structure of flows, delays, feedback loops and information flows (who knows what, when).'],
+['Strong','Rules of the system, power to self-organise, and the goals of the system.'],
+['Strongest','Paradigms: the shared assumptions the system arises from, and the ability to transcend them.']
+],
+note:`Most service projects work on parameters because they are easy to change. A change of goal, such as measuring a transport agency on access to jobs instead of cost per route, can reorganise everything downstream. Rittel and Webber (1973) called problems of this kind <b>wicked</b>: no definitive formulation, no stopping rule, solutions only better or worse, and every attempt has consequences.`,
+refs:['Meadows (1999), Leverage Points','Rittel & Webber (1973), Policy Sciences 4']},
+
+{t:'c', h:'Inclusion and accessibility',
+pts:[
+['Persona spectrum','Microsoft’s Inclusive Design toolkit: a permanent (one arm), temporary (arm injury) or situational (holding a baby) limitation. Designing for one helps many.'],
+['Curb-cut effect','Features designed for disabled people often benefit everyone: kerb ramps, captions, step-free access.'],
+['WCAG 2.2 (2023)','Perceivable, Operable, Understandable, Robust (POUR). The baseline for digital touchpoints.'],
+['Channel choice','Keep an assisted route for people who cannot or will not use digital channels. Digital-only is a policy choice with exclusion costs.']
+],
+note:`Inclusion is a service-level property. A perfectly accessible website still fails if the identity check requires a document many people do not have.`},
+
+{t:'c', h:'Deceptive patterns and responsible design',
+body:`Harry Brignull coined “dark patterns” in 2010, now often called <b>deceptive patterns</b>: interface or service choices that trick people into actions they did not intend. Regulators now act on them. India’s Central Consumer Protection Authority issued guidelines in 2023 naming thirteen patterns, and the EU’s Digital Services Act also restricts them.`,
+pts:[
+['Roach motel / obstruction','Easy to get in, hard to get out, such as subscriptions you can only cancel by phone.'],
+['Sneak into basket','Items or add-ons added without clear consent.'],
+['Confirmshaming','Guilt-tripping the decline option: “No thanks, I prefer paying full price.”'],
+['False urgency','Timers or scarcity claims that are not true.'],
+['Forced continuity','Free trials that convert to paid without clear notice.']
+],
+ex:`Run a consequence-scanning session before launch: what are the intended and unintended consequences, which should we mitigate, and who is not in the room? The format was popularised by Doteveryone.`},
+
+{t:'c', h:'Designing services with automation and AI',
+pts:[
+['Clear boundaries','Say what the automated part can and cannot do, at the point of use.'],
+['Graceful handoff','Detect when the system cannot help, offer a person, and transfer the context so the customer does not repeat themselves.'],
+['Explain decisions','People affected by an automated decision should understand why and how to challenge it (Downe’s principle 14).'],
+['Calibrated trust','Design so people neither over-trust nor dismiss the system: show confidence, sources and limits.'],
+['Backstage first','Some of the best uses sit behind the line of visibility, helping staff with triage, summaries and drafting, while people stay accountable frontstage.']
+],
+note:`Blueprint automated services with the same rigour as human ones. An AI agent is a frontstage or backstage actor with its own fail points, and those fail points need recovery paths.`},
+
+{t:'q', q:'A transport agency’s ridership is falling. Which intervention works at the highest leverage point in Meadows’ ranking?',
+o:['Raise bus frequency by 10%','Add real-time arrival information','Change the agency’s goal from cost per route to access to jobs within 45 minutes','Repaint buses in brighter colours'],
+a:2, x:'Changing the goal of the system outranks information flows, which outrank parameters such as frequency.'},
+
+{t:'q', q:'A new parent holding a baby in one arm struggles with a two-handed kiosk. On the persona spectrum, this limitation is:',
+o:['Permanent','Temporary','Situational','Not a disability concern'],
+a:2, x:'Designing for one-handed use helps people with a permanent limb difference, a temporary injury and situational constraints.'},
+
+{t:'s', q:'Sort these into deceptive patterns and fair design', b:['Deceptive','Fair'],
+items:[['Cancel only by phone in office hours; sign-up is one tap',0],['Travel insurance pre-ticked in the basket',0],['Decline link reads “No, I like paying more”',0],['Reminder three days before a trial converts to paid',1],['Full price with all fees shown on the first screen',1],['Countdown timer that resets on reload',0]],
+x:'Fair design gives people accurate information and symmetrical effort to say yes or no.'},
+
+{t:'q', q:'Which is NOT a characteristic of a wicked problem (Rittel & Webber)?',
+o:['No definitive formulation','No stopping rule','Solutions are better or worse, not true or false','Has an enumerable set of solutions that can be tested without consequence'],
+a:3, x:'Wicked problems lack an enumerable solution set, and every attempted solution is a one-shot operation with real consequences.'},
+
+{t:'q', q:'What is the best practice for a customer-service chatbot?',
+o:['Never mention that a human exists, to keep costs down','Offer a human at any point and pass the full conversation context on handoff','Hand off only after three failed attempts','Ask the customer to restart with a human from the beginning'],
+a:1, x:'Graceful handoff with context transfer avoids dead ends and repeated stories, both major drivers of effort and dissatisfaction.'}
+]},
+
+/* ═══════════════ M12 ═══════════════ */
+{code:'M12', level:'Expert', name:'Casebook: reading cases critically',
+desc:'Six cases analysed through the lenses in this course, including what they got wrong.',
+steps:[
+{t:'c', h:'Bank of America — Keep the Change (2005)',
+pts:[
+['Challenge','Grow new current and savings accounts among people who found saving hard.'],
+['Research','IDEO observed how people actually handled money, including rounding up figures and pocketing the change.'],
+['Intervention','Every debit-card purchase is rounded up to the next dollar and the difference moved into savings, automatically.'],
+['Outcome','IDEO reports about 2.5 million customers enrolled in the first year, with hundreds of thousands of new current and savings accounts.']
+],
+note:`Lenses: behavioural research over stated preference (M03); a default that does the work (M08); evidencing through statements that make small savings visible (M02). Critical reading: round-up schemes work best for people with steady card spending; their benefit for low-balance customers depends on overdraft and fee design.`},
+
+{t:'c', h:'Airbnb — evidencing trust (2009)',
+pts:[
+['Challenge','Weekly revenue was flat and listings in New York were not converting.'],
+['Insight','The founders stayed with hosts and saw that listing photos were dark and poor. Guests could not picture the home.'],
+['Intervention','They photographed listings themselves, then built a photography programme and richer host and guest profiles and reviews.'],
+['Outcome','Joe Gebbia has said weekly revenue in New York roughly doubled after the photo fix.']
+],
+note:`Lenses: intangibility managed through evidence (M01, M02); a service safari by the founders (M03); “do things that don’t scale” as a concierge prototype (M07). Critical reading: evidence also became a design liability when photos and reviews misrepresented reality. Trust systems need verification, not only presentation.`},
+
+{t:'c', h:'GOV.UK and Healthcare.gov',
+pts:[
+['GOV.UK (2012)','One domain replaced many departmental sites, organised around user needs and supported by a service standard, phase assessments and multidisciplinary teams.'],
+['Healthcare.gov (2013)','The US health-insurance marketplace launched in October 2013 and very few people could complete enrolment in its first days. Reviews cited fragmented contracting, unclear end-to-end ownership and late integration testing.'],
+['The response','A “tech surge” stabilised the site, and the US Digital Service was created in 2014.']
+],
+note:`Lenses: service ownership and Conway’s law (M10); blueprinting support processes (M05); pilots and operational readiness (M07). The contrast shows that you cannot assure a service by assuring its parts separately.`},
+
+{t:'c', h:'UPI and Disney MagicBand',
+pts:[
+['UPI (India, 2016)','The NPCI built open, interoperable payment rails: any bank, any app, a simple virtual payment address or QR code. Third-party apps competed on experience while sharing infrastructure. UPI became India’s dominant retail digital payment method.'],
+['UPI lenses','Ecosystem design (M05), institutions coordinating co-creation (M01), and a support layer designed as public infrastructure.'],
+['MagicBand (2013)','Disney’s MyMagic+ programme, reported to cost around a billion dollars, put tickets, room keys, ride reservations and payments on one RFID wristband.'],
+['MagicBand lenses','Heavy backstage integration enabling a simple frontstage (M05). Critical reading: it also moved planning effort onto guests, who booked ride slots weeks ahead, and raised data-privacy questions.']
+]},
+
+{t:'q', q:'What was the core insight behind Keep the Change?',
+o:['People wanted higher savings interest','People already rounded figures up and pocketed change; a service could automate that habit','People distrusted banks with spare money','People needed weekly reminders to save'],
+a:1, x:'Observed behaviour, not stated preference. The service attached itself to an existing habit and made it automatic.'},
+
+{t:'q', q:'Airbnb’s photo fix mainly addressed which service characteristic?',
+o:['Heterogeneity','Inseparability','Intangibility','Perishability'],
+a:2, x:'Guests cannot experience a home before booking. Photos act as evidence that reduces intangibility.'},
+
+{t:'q', q:'What is the central lesson of the Healthcare.gov launch for service designers?',
+o:['Websites need better visual design','A service cannot be assured by assuring its components separately; it needs end-to-end ownership and integration testing','Government should not run digital services','Launches should always be delayed'],
+a:1, x:'The parts were contracted and tested separately. Nobody owned the whole journey until it failed in public.'},
+
+{t:'q', q:'Why is UPI considered an ecosystem design rather than a single service?',
+o:['It is run by one bank','It provides shared, interoperable rails that many banks and apps build on','It only works in one app','It replaced cash by law'],
+a:1, x:'UPI designed the institutions and infrastructure that let many actors co-create value, then let them compete on experience.'},
+
+{t:'m', q:'Match each case to the lens it best illustrates',
+pairs:[
+['Keep the Change','Behavioural observation turned into a default'],
+['Airbnb photos','Evidencing to reduce intangibility'],
+['GOV.UK','Service standards and multidisciplinary teams'],
+['MagicBand','Backstage integration for a simple frontstage']
+]}
+]}
+];
+
+const TRACKS = [
+ ['Foundations',[0,1]],
+ ['Understanding people',[2,3]],
+ ['Designing the system',[4,5,6]],
+ ['Behaviour and measurement',[7,8]],
+ ['Leading at scale',[9,10]],
+ ['Casebook',[11]]
+];
+
+/* ── GLOSSARY: [term, definition, module index] ── */
+const GLOSS = [
+['Affinity diagram','Clustering observations by similarity to find patterns. Derived from Kawakita’s KJ method.',2],
+['Alignment diagram','Kalbach’s umbrella term for maps that align an organisation with people’s experience.',3],
+['Backstage','Employee actions the customer does not see, below the line of visibility.',4],
+['Behavioural archetype','A user type defined by behaviours and mindsets rather than demographics.',2],
+['Bodystorming','Ideating physically in a real or mocked-up setting.',6],
+['Co-evolution','Problem and solution develop together during design (Dorst & Cross, 2001).',5],
+['Confirmshaming','Wording the decline option to make people feel guilty.',10],
+['Contextual inquiry','Observing and interviewing people where the work happens, as an apprentice.',2],
+['Conway’s law','Organisations design systems that mirror their own communication structures.',9],
+['Customer Effort Score (CES)','How much effort it took to get an issue resolved; a predictor of disloyalty.',8],
+['Deceptive pattern','A design that tricks people into actions they did not intend. Formerly “dark pattern”.',10],
+['Desktop walkthrough','Rehearsing a service flow with figures on a small-scale model.',6],
+['Double Diamond','Design Council model: Discover, Define, Develop, Deliver, in two diverge–converge rounds.',5],
+['Duration neglect','The length of an experience barely affects how it is remembered.',3],
+['Ecosystem map','All actors and relationships around a service, inside and outside the organisation.',4],
+['Evidencing','Making intangible or backstage work visible through artefacts.',1],
+['Experience map','A map of a human activity broader than any one provider.',3],
+['Failure demand','Demand caused by a failure to do something, or do it right, for the customer (Seddon).',8],
+['Fail point','A blueprint step where failure is likely and recovery should be designed.',4],
+['Frontstage','Employee actions visible to the customer, above the line of visibility.',4],
+['Functional quality','How a service is delivered, as distinct from what is delivered (Grönroos).',0],
+['Gaps model','Five gaps explaining why perceived service falls short of expectations.',8],
+['Goodhart’s law','When a measure becomes a target, it ceases to be a good measure.',8],
+['HEART','Google’s framework: Happiness, Engagement, Adoption, Retention, Task success.',8],
+['How Might We (HMW)','A question format that reframes an insight as an open design opportunity.',5],
+['IHIP','Intangibility, heterogeneity, inseparability, perishability. Useful prompts; contested definition.',0],
+['Investigative rehearsal','Acting out service scenes and replaying alternatives, adapted from Forum Theatre.',6],
+['Job story','When [situation], I want to [motivation], so I can [outcome].',2],
+['Job to be done','The progress a person is trying to make in a particular circumstance.',2],
+['Journey management','Running key journeys as operating units with owners, metrics and backlogs.',3],
+['Kano model','Classifies attributes as must-be, performance, attractive, indifferent or reverse.',7],
+['Labour illusion','Visible effort raises perceived value of a service (Buell & Norton).',1],
+['Lead users','People who face a need early and often build their own solutions (von Hippel).',2],
+['Leverage point','A place to intervene in a system; Meadows ranked twelve by power.',10],
+['Line of interaction','Separates customer actions from frontstage actions on a blueprint.',4],
+['Line of internal interaction','Separates backstage actions from support processes.',4],
+['Line of visibility','Separates what the customer can see from what they cannot.',4],
+['Little’s Law','L = λW: people in system = arrival rate × time in system.',4],
+['Moment of truth','A brief encounter in which a customer forms an impression (Carlzon).',3],
+['Net Promoter Score (NPS)','% promoters (9–10) minus % detractors (0–6) on likelihood to recommend.',8],
+['Non-ownership','Services give access to resources without transfer of ownership (Lovelock & Gummesson).',0],
+['Operand resources','Resources that are acted on, such as materials and equipment.',0],
+['Operant resources','Resources that act on others, such as knowledge and skills.',0],
+['Peak-end rule','Remembered experience is driven by the most intense moment and the end.',3],
+['Persona spectrum','Permanent, temporary and situational versions of a limitation.',10],
+['Physical evidence','Tangible things customers encounter that signal quality.',4],
+['Saturation','The point where additional research adds few new insights.',2],
+['Service blueprint','A diagram of customer actions, frontstage, backstage and support processes.',4],
+['Service-dominant logic','Service, the application of competences for another’s benefit, is the basis of all exchange.',0],
+['Service owner','One person accountable for a service end to end.',9],
+['Service-profit chain','Links internal service quality to employee and customer outcomes and profit.',9],
+['Service recovery paradox','Claim that excellent recovery can exceed pre-failure satisfaction. Evidence is limited.',7],
+['Servicescape','The physical environment in which a service takes place (Bitner).',0],
+['SERVPERF','Perceptions-only alternative to SERVQUAL (Cronin & Taylor).',8],
+['SERVQUAL','22-item scale measuring perception minus expectation across five RATER dimensions.',8],
+['Thematic analysis','Systematic coding of qualitative data into themes (Braun & Clarke).',2],
+['Touchpoint','Any point at which a person interacts with a service.',3],
+['Triangulation','Cross-checking a finding using different data, methods, investigators or theories.',2],
+['Utilisation','Share of time a resource is busy; waits grow sharply as it approaches 100%.',4],
+['Value-in-use','Value that emerges when a beneficiary uses resources in their own context.',0],
+['Wait point','A blueprint step where customers wait; mark expected and tolerable time.',4],
+['Wicked problem','A problem with no definitive formulation or stopping rule (Rittel & Webber).',10],
+['Wizard of Oz','A person secretly performs what a system will later automate.',6],
+['Zone of tolerance','The range between adequate and desired service.',7]
+];
+
+/* ── LIBRARY ── */
+const LIB = [
+['Core books',[
+['This is Service Design Doing','Stickdorn, Hormess, Lawrence & Schneider','2018','The field’s practical handbook: methods, facilitation and organisational change.'],
+['Service Design: From Insight to Implementation','Polaine, Løvlie & Reason','2013','Concise and strategic, strong on measurement and business value.'],
+['Good Services','Lou Downe','2020','Fifteen principles written from the user’s side; an excellent audit tool.'],
+['Orchestrating Experiences','Risdon & Quattlebaum','2018','Designing across channels and touchpoints, with ecosystem thinking.'],
+['Mapping Experiences','Jim Kalbach','2016 / 2020','The definitive guide to journey maps, blueprints and alignment diagrams.'],
+['This is Service Design Thinking','Stickdorn & Schneider','2010','The book that popularised the field and its first five principles.']
+]],
+['Research and framing',[
+['Contextual Design','Beyer & Holtzblatt','1998','Contextual inquiry and work modelling.'],
+['Interviewing Users','Steve Portigal','2013 / 2023','Practical craft of research interviews.'],
+['Frame Innovation','Kees Dorst','2015','Reframing as the core skill of design.'],
+['Competing Against Luck','Christensen, Hall, Dillon & Duncan','2016','Jobs-to-be-done theory.']
+]],
+['Key papers',[
+['Designing Services That Deliver','G. Lynn Shostack, HBR','1984','The origin of the service blueprint.'],
+['Service Blueprinting: A Practical Technique for Service Innovation','Bitner, Ostrom & Morgan, CMR','2008','The modern blueprint format.'],
+['A Conceptual Model of Service Quality','Parasuraman, Zeithaml & Berry, J. Marketing','1985','The gaps model.'],
+['Evolving to a New Dominant Logic for Marketing','Vargo & Lusch, J. Marketing','2004','Service-dominant logic.'],
+['Whither Services Marketing?','Lovelock & Gummesson, J. Service Research','2004','The critique of IHIP and the non-ownership lens.'],
+['The Psychology of Waiting Lines','David Maister','1985','Eight propositions for queue design.'],
+['Want to Perfect Your Company’s Service? Use Behavioral Science','Chase & Dasu, HBR','2001','Sequencing rules from behavioural science.'],
+['Stop Trying to Delight Your Customers','Dixon, Freeman & Toman, HBR','2010','The case for effort reduction and CES.'],
+['Putting the Service-Profit Chain to Work','Heskett et al., HBR','1994','Linking employee experience to profit.'],
+['The Labor Illusion','Buell & Norton, Management Science','2011','Why visible effort raises perceived value.']
+]],
+['Systems and organisations',[
+['Leverage Points: Places to Intervene in a System','Donella Meadows','1999','A ranking of where change has most power.'],
+['Dilemmas in a General Theory of Planning','Rittel & Webber','1973','The origin of “wicked problems”.'],
+['Freedom from Command and Control','John Seddon','2003','Failure demand and systems thinking in service operations.'],
+['Service Standard','UK Government Digital Service','2019','Fourteen points used to assess public services.']
+]]
+];
+
+</script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const main=$('#main'), top=$('#top'), tabs=$('#tabs');
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const pad=n=>String(n).padStart(2,'0');
+
+/* ── state ── */
+const KEY='sda_expert_v2';
+const fresh=()=>({xp:0,res:{},earned:{},done:{},missed:[],theme:'system',cur:null,log:[],days:[],saved:null});
+let S=fresh();
+let canSave=false;
+try{const t='__sda_t';localStorage.setItem(t,'1');canSave=localStorage.getItem(t)==='1';localStorage.removeItem(t)}catch(e){canSave=false}
+try{const r=localStorage.getItem(KEY); if(r) S=Object.assign(fresh(),JSON.parse(r));}catch(e){}
+function save(){S.saved=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));canSave=true}catch(e){canSave=false}}
+const mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
+const isDark=()=>S.theme==='dark'||(S.theme==='system'&&mq&&mq.matches);
+function applyTheme(){const r=document.documentElement; if(S.theme==='system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme',S.theme);
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',isDark()?'#0C121D':'#FFFFFF');
+  const b=document.getElementById('themebtn'); if(b){b.innerHTML=isDark()?I.sun:I.moon;b.setAttribute('aria-label',isDark()?'Switch to light mode':'Switch to dark mode')}}
+function toggleTheme(){S.theme=isDark()?'light':'dark';save();applyTheme();pop(isDark()?'Dark mode':'Light mode')}
+if(mq&&mq.addEventListener) mq.addEventListener('change',()=>{if(S.theme==='system')applyTheme()});
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+function markDay(){const t=today(); if(!S.days.includes(t)){S.days.push(t); if(S.days.length>400) S.days=S.days.slice(-400)}}
+function streak(){const set=new Set(S.days);let n=0;const d=new Date();if(!set.has(today()))d.setDate(d.getDate()-1);
+  while(true){const k=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());if(set.has(k)){n++;d.setDate(d.getDate()-1)}else break}return n}
+const fmtTime=t=>{if(!t)return 'never';const d=new Date(t);return d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+', '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})};
+
+const qIds=mi=>MODS[mi].steps.map((s,i)=>s.t==='c'?null:mi+'.'+i).filter(Boolean);
+const mastery=mi=>{const ids=qIds(mi);const c=ids.filter(id=>S.res[id]===true).length;return ids.length?Math.round(c/ids.length*100):0};
+const allQ=()=>MODS.flatMap((m,mi)=>m.steps.map((s,i)=>({mi,i,s})).filter(x=>x.s.t!=='c'));
+const XPV={q:10,m:20,s:20,o:20};
+
+let view='learn', sess=null;
+
+/* ── icons ── */
+const I={
+ learn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="12" r="2"/><path d="M6.6 10.8 10.4 7.2M13.6 7.2l3.8 3.6"/><path d="M3 18h18" stroke-dasharray="2 2.5"/></svg>',
+ review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/><path d="M12 8v4l3 2"/></svg>',
+ glossary:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/></svg>',
+ library:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4v16H5zM10 4h4v16h-4z"/><path d="m15 5 3.8-1 2.7 15.5-3.8 1z"/></svg>',
+ me:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+ sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+ moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
+};
+const TABS=[['learn','Learn'],['review','Review'],['glossary','Glossary'],['library','Library'],['me','Progress']];
+
+function renderTabs(){
+  tabs.innerHTML=TABS.map(([k,l])=>`<button class="tab" data-v="${k}" ${view===k?'aria-current="page"':''}>${I[k]}<span>${l}</span>${k==='review'&&S.missed.length?`<span class="badge">${S.missed.length}</span>`:''}</button>`).join('');
+  tabs.querySelectorAll('.tab').forEach(b=>b.onclick=()=>go(b.dataset.v));
+}
+const TITLES={learn:['Service Design Academy','Expert curriculum'],review:['Review','Questions to revisit'],glossary:['Glossary',GLOSS.length+' terms'],library:['Library','Books and papers'],me:['Progress','Your record'],result:['Service Design Academy','Session summary']};
+function renderTop(){
+  if(sess){
+    const n=sess.steps.length;
+    top.innerHTML=`<div class="top-in"><button class="iconbtn" id="exit" aria-label="Exit">${I.x}</button><div class="top-title">${sess.title}<small>${sess.code} · Step ${sess.k+1} of ${n}</small></div><div class="xp" id="xp">${S.xp} XP</div><button class="iconbtn" id="themebtn" aria-label="Toggle theme"></button></div>
+    <div class="strip">${sess.steps.map((_,j)=>`<i class="${j<sess.k?'on':j===sess.k?'now':''}"></i>`).join('')}</div>`;
+    $('#exit').onclick=()=>go(sess.kind==='module'?'learn':sess.kind==='review'?'review':'learn');
+  } else {
+    const [t,s]=TITLES[view];
+    top.innerHTML=`<div class="top-in"><div class="mark" aria-hidden="true">SD</div><div class="top-title">${t}<small>${s}</small></div><div class="xp" id="xp">${S.xp} XP</div><button class="iconbtn" id="themebtn" aria-label="Toggle theme"></button></div>`;
+  }
+  $('#themebtn').onclick=toggleTheme; applyTheme();
+}
+function pop(t){document.querySelectorAll('.pop').forEach(x=>x.remove());const e=document.createElement('div');e.className='pop';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),1700)}
+
+function go(v){view=v;sess=null;document.body.classList.remove('in-session');render()}
+function render(){renderTop();renderTabs();({learn:vLearn,review:vReview,glossary:vGloss,library:vLib,me:vMe})[view]();window.scrollTo(0,0)}
+
+/* ── LEARN ── */
+function vLearn(){
+  const doneN=Object.keys(S.done).length;
+  const nextI=Math.max(0,MODS.findIndex((m,i)=>!S.done[m.code]));
+  const allDone=doneN===MODS.length;
+  const fill=MODS.length>1?Math.min(100,(doneN?(Math.max(...MODS.map((m,i)=>S.done[m.code]?i:-1)))/(MODS.length-1)*100:0)):0;
+  const cur=S.cur&&MODS[S.cur.mi]&&S.cur.k>0?S.cur:null;
+  let h=(canSave?'':`<div class="warn" role="alert"><b>Progress can't be saved here.</b> This viewer blocks storage, so your progress will be lost when you close it. Open the file in Chrome or Safari instead, or copy a backup code from the Progress tab.</div>`)+`<section class="hero fade">
+    <span class="mono" style="color:var(--accent)">12 modules · ${allQ().length} challenges · ${GLOSS.length} terms</span>
+    <h1>Service Design <span>Academy</span></h1>
+    <p class="lede">From service-dominant logic to blueprints, queueing, measurement, organisational design and critical case analysis. Written for practitioners who want the theory behind the tools.</p>
+  </section>
+  <section class="journey">
+    <div class="journey-head"><b>${allDone?'Curriculum complete':doneN?'Your journey':'Start your journey'}</b><span class="mono" style="color:var(--muted)">${doneN} of ${MODS.length} touchpoints</span></div>
+    <div class="tps" style="--fill:${fill}%">${MODS.map((m,i)=>`<div class="tp ${S.done[m.code]?'on':''} ${!allDone&&i===nextI?'next':''}" title="${m.code}"><i></i></div>`).join('')}</div>
+    <div class="vis mono">line of visibility</div>
+    ${cur?`<button class="resume" id="resume"><span class="mono">Resume where you left off</span><b>${MODS[cur.mi].code} ${MODS[cur.mi].name}</b><span class="hint">Step ${cur.k+1} of ${MODS[cur.mi].steps.length} · saved ${fmtTime(cur.at)}</span></button>`:''}
+    <div class="row-actions">
+      <button class="btn primary" id="cont" style="flex:1 1 200px">${allDone?'Revisit M01':doneN?'Continue':'Begin'} · ${MODS[nextI].code} ${MODS[nextI].name}</button>
+      <button class="btn" id="exam" style="flex:1 1 140px">Mastery exam</button>
+    </div>
+  </section>`;
+  TRACKS.forEach(([t,ids])=>{
+    h+=`<section class="track"><div class="track-h mono">${t}</div><div class="mlist">${ids.map(mi=>{
+      const m=MODS[mi], d=S.done[m.code], p=mastery(mi), qs=qIds(mi).length;
+      return `<button class="mrow ${d?'done':''}" data-m="${mi}"><span class="mcode">${m.code}</span><span style="min-width:0"><span class="mname">${m.name}</span><span class="mmeta"><span class="lvl ${m.level}">${m.level}</span><span>${m.steps.length} steps · ${qs} challenges</span></span></span><span class="pct">${d||p?p+'%':'›'}</span></button>`;
+    }).join('')}</div></section>`;
+  });
+  main.innerHTML=h;
+  $('#cont').onclick=()=>startModule(nextI);
+  if(cur) $('#resume').onclick=()=>startModule(cur.mi,cur);
+  $('#exam').onclick=startExam;
+  main.querySelectorAll('.mrow').forEach(b=>b.onclick=()=>startModule(+b.dataset.m));
+}
+
+/* ── SESSIONS ── */
+function begin(o){sess=Object.assign({k:0,ok:0,n:0,gained:0},o);markDay();save();view='session';document.body.classList.add('in-session');renderStep()}
+function startModule(mi,from){const m=MODS[mi];const o={kind:'module',mi,title:m.name,code:m.code,steps:m.steps.map((s,i)=>({mi,i,s}))};
+  if(!from&&S.cur&&S.cur.mi===mi&&S.cur.k>0&&S.cur.k<m.steps.length) from=S.cur;
+  if(from){o.k=Math.min(from.k,m.steps.length-1);o.ok=from.ok||0;o.n=from.n||0;o.gained=from.gained||0}
+  begin(o)}
+function startReview(){const steps=S.missed.map(id=>{const [mi,i]=id.split('.').map(Number);return MODS[mi]&&MODS[mi].steps[i]?{mi,i,s:MODS[mi].steps[i]}:null}).filter(Boolean);if(!steps.length)return;begin({kind:'review',title:'Review queue',code:'Review',steps:shuffle(steps)})}
+function startExam(){begin({kind:'exam',title:'Mastery exam',code:'Exam',steps:shuffle(allQ()).slice(0,20)})}
+
+function renderStep(){
+  renderTop(); window.scrollTo(0,0);
+  const st=sess.steps[sess.k], s=st.s, m=MODS[st.mi];
+  const tag=`${m.code} · ${pad(st.i+1)}`;
+  const kinds={c:['Concept',''],q:['Question','q'],m:['Match','q'],s:['Sort','q'],o:['Sequence','q']};
+  const [kl,kc]=kinds[s.t];
+  const eb=`<div class="eyebrow mono"><span class="kind ${kc}">${kl}</span><span>${tag}</span>${sess.kind!=='module'?`<span>${m.name}</span>`:''}</div>`;
+  const card=document.createElement('article'); card.className='card fade';
+  main.innerHTML=''; main.appendChild(card);
+  ({c:rConcept,q:rMCQ,m:rMatch,s:rSort,o:rOrder})[s.t](card,s,eb,st);
+}
+function nextStep(){if(!sess)return;sess.k++; if(sess.k>=sess.steps.length) finish(); else {if(sess.kind==='module'){S.cur={mi:sess.mi,k:sess.k,ok:sess.ok,n:sess.n,gained:sess.gained,at:Date.now()};save()} renderStep()}}
+
+function record(st,ok){
+  const id=st.mi+'.'+st.i, val=XPV[st.s.t]||10;
+  S.res[id]=ok; sess.n++;
+  if(ok){sess.ok++; if(!S.earned[id]){S.earned[id]=1;S.xp+=val;sess.gained+=val;pop('+'+val+' XP')} S.missed=S.missed.filter(x=>x!==id)}
+  else if(!S.missed.includes(id)) S.missed.push(id);
+  save(); const x=$('#xp'); if(x) x.textContent=S.xp+' XP';
+}
+function feedback(card,ok,title,text){
+  const slot=card.querySelector('.fb-slot');
+  slot.innerHTML=`<div class="fb ${ok?'ok':'no'}" role="status"><strong>${title}</strong><span>${text||''}</span></div><button class="btn primary block" id="nx">${sess.k===sess.steps.length-1?'Finish':'Continue'}</button>`;
+  $('#nx').onclick=nextStep;
+  slot.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* concept */
+function rConcept(card,s,eb){
+  let h=eb+`<h2>${s.h}</h2>`;
+  if(s.body) h+=`<div class="prose">${s.body}</div>`;
+  if(s.fig) h+=`<figure class="lanes"><figcaption class="mono">${s.fig.t}</figcaption>${s.fig.rows.map(r=>r[0]==='-'?`<div class="lane-line mono">${r[1]}</div>`:`<div class="lane"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')}</figure>`;
+  if(s.pts) h+=`<dl class="pts">${s.pts.map(p=>`<div><dt>${p[0]}</dt><dd>${p[1]}</dd></div>`).join('')}</dl>`;
+  if(s.note) h+=`<aside class="note expert"><span class="mono">Expert lens</span><div>${s.note}</div></aside>`;
+  if(s.ex) h+=`<aside class="note field"><span class="mono">In practice</span><div>${s.ex}</div></aside>`;
+  if(s.refs) h+=`<div class="refs"><span class="mono">Sources</span>${s.refs.map(r=>`<span>${r}</span>`).join('')}</div>`;
+  h+=`<button class="btn primary block" id="nx">${sess.k===sess.steps.length-1?'Finish':'Continue'}</button>`;
+  card.innerHTML=h; $('#nx').onclick=nextStep;
+}
+
+/* multiple choice */
+function rMCQ(card,s,eb,st){
+  const ord=shuffle(s.o.map((_,i)=>i));
+  card.innerHTML=eb+`<h2 class="q">${s.q}</h2>${s.ctx?`<p class="ctx">${s.ctx}</p>`:''}<div class="opts">${ord.map((oi,k)=>`<button class="opt" data-oi="${oi}"><span class="key">${'ABCDE'[k]}</span><span>${s.o[oi]}</span></button>`).join('')}</div><div class="fb-slot"></div>`;
+  card.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const ok=+b.dataset.oi===s.a;
+    card.querySelectorAll('.opt').forEach(x=>{x.disabled=true;if(+x.dataset.oi===s.a)x.classList.add('right')});
+    if(!ok) b.classList.add('wrong');
+    record(st,ok); feedback(card,ok,ok?'Correct':'Not quite',s.x);
+  });
+}
+
+/* match */
+function rMatch(card,s,eb,st){
+  const defs=shuffle(s.pairs.map((_,i)=>i));
+  let sel=null, matched=0, slips=0;
+  card.innerHTML=eb+`<h2 class="q">${s.q}</h2><p class="hint">Tap a term, then tap the description it belongs to.</p>
+   <div class="chips">${s.pairs.map((p,i)=>`<button class="chip" data-t="${i}">${p[0]}</button>`).join('')}</div>
+   <div class="defs">${defs.map(i=>`<button class="def" data-d="${i}">${s.pairs[i][1]}</button>`).join('')}</div><div class="fb-slot"></div>`;
+  const chips=[...card.querySelectorAll('.chip')];
+  chips.forEach(c=>c.onclick=()=>{if(c.classList.contains('done'))return;chips.forEach(x=>x.classList.remove('sel'));c.classList.add('sel');sel=+c.dataset.t});
+  card.querySelectorAll('.def').forEach(d=>d.onclick=()=>{
+    if(d.classList.contains('done'))return;
+    if(sel===null){chips.find(c=>!c.classList.contains('done'))?.focus();return}
+    if(+d.dataset.d===sel){
+      d.classList.add('done'); d.innerHTML=`<small>${s.pairs[sel][0]}</small>${s.pairs[sel][1]}`;
+      const c=chips[sel]; c.classList.remove('sel'); c.classList.add('done'); c.disabled=true;
+      sel=null; matched++;
+      if(matched===s.pairs.length){const ok=slips<=1;record(st,ok);feedback(card,ok,ok?(slips?'Matched, with one slip':'Perfect match'):`Matched after ${slips} slips`,s.x||(ok?'All pairs linked correctly.':'This one goes to your review queue so you can try it again later.'))}
+    } else {slips++; d.classList.add('flash'); setTimeout(()=>d.classList.remove('flash'),550); chips.forEach(x=>x.classList.remove('sel')); sel=null}
+  });
+}
+
+/* sort */
+function rSort(card,s,eb,st){
+  const items=shuffle(s.items.map((it,i)=>i)); const pick={};
+  card.innerHTML=eb+`<h2 class="q">${s.q}</h2>${s.ctx?`<p class="ctx">${s.ctx}</p>`:''}
+   <div class="sorts">${items.map(i=>`<div class="srow" data-i="${i}"><span class="stext">${s.items[i][0]}</span><div class="seg">${s.b.map((b,bi)=>`<button data-b="${bi}" aria-pressed="false">${b}</button>`).join('')}</div></div>`).join('')}</div>
+   <button class="btn accent block" id="chk" disabled>Check answers</button><div class="fb-slot"></div>`;
+  const chk=$('#chk');
+  card.querySelectorAll('.srow').forEach(r=>r.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+    if(chk.dataset.done)return;
+    r.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');
+    pick[r.dataset.i]=+b.dataset.b; chk.disabled=Object.keys(pick).length<s.items.length;
+  }));
+  chk.onclick=()=>{
+    chk.dataset.done=1; chk.disabled=true; let score=0;
+    card.querySelectorAll('.srow').forEach(r=>{const i=+r.dataset.i, want=s.items[i][1], got=pick[i];const ok=want===got;if(ok)score++;
+      r.classList.add(ok?'right':'wrong'); r.querySelectorAll('.seg button').forEach(x=>x.disabled=true);
+      if(!ok){const v=document.createElement('span');v.className='verdict';v.textContent='Belongs in: '+s.b[want];r.appendChild(v)}});
+    const ok=score/s.items.length>=0.8; record(st,ok);
+    feedback(card,ok,`${score} of ${s.items.length} sorted correctly`,s.x);
+  };
+}
+
+/* order */
+function rOrder(card,s,eb,st){
+  let pool=shuffle(s.items.map((_,i)=>i)); if(pool.every((v,i)=>v===i)&&pool.length>1) pool.reverse();
+  const seq=[];
+  card.innerHTML=eb+`<h2 class="q">${s.q}</h2><p class="hint">Tap items to place them. Tap a placed item to send it back.</p><div class="seq" id="seq"></div><div class="pool" id="pool"></div><button class="btn accent block" id="chk" disabled>Check order</button><div class="fb-slot"></div>`;
+  const draw=()=>{
+    $('#seq').innerHTML=seq.map((i,k)=>`<button data-i="${i}"><span class="n">${k+1}</span>${s.items[i]}</button>`).join('');
+    $('#pool').innerHTML=pool.map(i=>`<button data-i="${i}">${s.items[i]}</button>`).join('');
+    $('#chk').disabled=pool.length>0;
+    $('#seq').querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;seq.splice(seq.indexOf(i),1);pool.push(i);draw()});
+    $('#pool').querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;pool=pool.filter(x=>x!==i);seq.push(i);draw()});
+  };
+  draw();
+  $('#chk').onclick=()=>{
+    const ok=seq.every((v,k)=>v===k);
+    $('#seq').querySelectorAll('button').forEach((b,k)=>{b.classList.add(+b.dataset.i===k?'right':'wrong');b.onclick=null;b.disabled=true});
+    $('#chk').disabled=true; record(st,ok);
+    feedback(card,ok,ok?'Correct sequence':'Not quite',(ok?'':`The order is: <ol class="answer-list">${s.items.map(t=>`<li>${t}</li>`).join('')}</ol>`)+(s.x||''));
+  };
+}
+
+/* finish */
+function finish(){
+  const k=sess.kind, ok=sess.ok, n=sess.n, pct=n?Math.round(ok/n*100):100;
+  let bonus=0, nextMi=null, title;
+  if(k==='module'){
+    const m=MODS[sess.mi]; title=m.name;
+    if(!S.done[m.code]){bonus=25;S.xp+=bonus;sess.gained+=bonus}
+    const prev=S.done[m.code]; S.done[m.code]={ok,n,best:Math.max(n?Math.round(ok/n*100):100,prev&&prev.best||0),at:Date.now()}; S.cur=null;
+    if(sess.mi<MODS.length-1) nextMi=sess.mi+1;
+  } else title=k==='exam'?'Mastery exam':'Review session';
+  const gain=sess.gained;
+  S.log.unshift({t:title,kind:k,code:k==='module'?MODS[sess.mi].code:k==='exam'?'Exam':'Review',ok,n,xp:gain,at:Date.now()}); if(S.log.length>200) S.log=S.log.slice(0,200);
+  markDay(); save();
+  const verdict=pct>=85?'Expert standard. Well done.':pct>=65?'Solid. Revisit the expert notes on anything you missed.':'Worth another pass. Missed questions are waiting in your review queue.';
+  sess=null; document.body.classList.remove('in-session'); view='result';
+  renderTop(); renderTabs(); window.scrollTo(0,0);
+  main.innerHTML=`<section class="card fade" style="align-items:flex-start">
+    <span class="mono" style="color:var(--accent)">${k==='module'?'Module complete':k==='exam'?'Exam result':'Review complete'}</span>
+    <h2>${title}</h2>
+    <div class="big">${pct}%</div>
+    <p class="lede">${verdict}</p>
+    <div class="tiles" style="width:100%">
+      <div class="tile"><b>${ok}/${n}</b><span>Correct</span></div>
+      <div class="tile"><b>+${gain}</b><span>XP earned${bonus?', incl. completion bonus':''}</span></div>
+      <div class="tile"><b>${Object.keys(S.done).length}/${MODS.length}</b><span>Modules done</span></div>
+      <div class="tile"><b>${S.missed.length}</b><span>In review queue</span></div>
+    </div>
+    <div class="row-actions" style="width:100%">
+      ${nextMi!==null?`<button class="btn primary" id="nm" style="flex:1 1 200px">Next · ${MODS[nextMi].code} ${MODS[nextMi].name}</button>`:''}
+      ${S.missed.length?`<button class="btn" id="rv" style="flex:1 1 140px">Review ${S.missed.length} missed</button>`:''}
+      <button class="btn ghost" id="bk" style="flex:1 1 120px">All modules</button>
+    </div>
+  </section>`;
+  if(nextMi!==null) $('#nm').onclick=()=>startModule(nextMi);
+  if(S.missed.length) $('#rv').onclick=startReview;
+  $('#bk').onclick=()=>go('learn');
+}
+
+/* ── REVIEW ── */
+function vReview(){
+  if(!S.missed.length){
+    main.innerHTML=`<section class="card"><div class="empty"><b>Your review queue is empty</b><p>Questions you miss land here, and leave once you answer them correctly. Try the mastery exam to find gaps across all twelve modules.</p><button class="btn primary" id="ex">Take the mastery exam</button></div></section>`;
+    $('#ex').onclick=startExam; return;
+  }
+  main.innerHTML=`<section class="hero"><span class="mono" style="color:var(--signal)">${S.missed.length} to revisit</span><h1 style="font-size:34px">Close the gaps</h1><p class="lede">Each question leaves the queue when you answer it correctly. Order is shuffled every session.</p><button class="btn primary" id="go">Start review</button></section>
+  <div class="qlist">${S.missed.map(id=>{const [mi,i]=id.split('.').map(Number);const s=MODS[mi]?.steps[i];return s?`<div><span class="mono">${MODS[mi].code}</span><span>${s.q}</span></div>`:''}).join('')}</div>`;
+  $('#go').onclick=startReview;
+}
+
+/* ── GLOSSARY ── */
+function vGloss(){
+  main.innerHTML=`<label class="mono" for="gq" style="color:var(--muted)">Search terms</label><input id="gq" class="search" type="search" placeholder="e.g. blueprint, Kano, failure demand" autocomplete="off" style="margin-top:-14px"><div id="gl"></div>`;
+  const list=[...GLOSS].sort((a,b)=>a[0].localeCompare(b[0]));
+  const draw=q=>{
+    q=(q||'').toLowerCase().trim();
+    const f=list.filter(g=>!q||g[0].toLowerCase().includes(q)||g[1].toLowerCase().includes(q));
+    if(!f.length){$('#gl').innerHTML=`<div class="empty"><b>No matches</b><p>Try a shorter word, or browse the full list by clearing the search.</p></div>`;return}
+    let last='',h='<div class="glist">';
+    f.forEach(g=>{const L=g[0][0].toUpperCase(); if(!q&&L!==last){h+=`<div class="letter mono">${L}</div>`;last=L}
+      h+=`<div class="gitem"><b>${g[0]}</b><p>${g[1]}</p><button data-m="${g[2]}">Open ${MODS[g[2]].code} · ${MODS[g[2]].name}</button></div>`});
+    $('#gl').innerHTML=h+'</div>';
+    $('#gl').querySelectorAll('.gitem button').forEach(b=>b.onclick=()=>startModule(+b.dataset.m));
+  };
+  draw(''); $('#gq').oninput=e=>draw(e.target.value);
+}
+
+/* ── LIBRARY ── */
+function vLib(){
+  main.innerHTML=`<section class="hero"><h1 style="font-size:34px">The canon</h1><p class="lede">The books and papers this curriculum draws on. Read the papers for the original arguments; read the books for method.</p></section>`+
+  LIB.map(([g,items])=>`<section class="track"><div class="track-h mono">${g}</div><div class="glist">${items.map(b=>`<div class="book"><b>${b[0]}</b><span class="by">${b[1]}<span>${b[2]}</span></span><p>${b[3]}</p></div>`).join('')}</div></section>`).join('');
+}
+
+/* ── PROGRESS ── */
+function encode(){try{return 'SDA1.'+btoa(unescape(encodeURIComponent(JSON.stringify(S))))}catch(e){return ''}}
+function decode(str){str=(str||'').trim();if(!str)throw new Error('empty');
+  let json;
+  if(str[0]==='{') json=str; else {str=str.replace(/^SDA1\./,'').replace(/\s+/g,'');json=decodeURIComponent(escape(atob(str)))}
+  const o=JSON.parse(json); if(typeof o!=='object'||typeof o.xp!=='number'||!o.done) throw new Error('shape');
+  return Object.assign(fresh(),o)}
+function vMe(){
+  const ans=Object.keys(S.res).length, cor=Object.values(S.res).filter(Boolean).length;
+  const st=streak(), isFile=location.protocol==='file:';
+  const logH=S.log.length?`<div class="log">${S.log.slice(0,12).map(e=>{const p=e.n?Math.round(e.ok/e.n*100):100;return `<div class="logrow"><span class="mono lcode">${e.code}</span><span class="lmain"><b>${e.t}</b><span class="hint">${fmtTime(e.at)} · ${e.ok}/${e.n} correct · +${e.xp} XP</span></span><span class="lpct ${p>=85?'hi':p>=65?'mid':'lo'}">${p}%</span></div>`}).join('')}</div>${S.log.length>12?`<p class="hint">Showing the latest 12 of ${S.log.length} sessions.</p>`:''}`:`<p class="hint">Finished modules, reviews and exams will be listed here with date and score.</p>`;
+  main.innerHTML=`${canSave?'':`<div class="warn" role="alert"><b>Progress can't be saved in this viewer.</b> Open the file in Chrome or Safari, or copy a backup code below before you close it.</div>`}
+  <div class="savebar ${canSave?'ok':'no'}"><span class="dot"></span><span>${canSave?`Progress saves automatically on this device · last saved ${fmtTime(S.saved)}`:'Automatic saving is off in this viewer'}</span></div>
+  <div class="tiles">
+    <div class="tile"><b>${S.xp}</b><span>XP</span></div>
+    <div class="tile"><b>${Object.keys(S.done).length}/${MODS.length}</b><span>Modules done</span></div>
+    <div class="tile"><b>${ans?Math.round(cor/ans*100)+'%':'–'}</b><span>Accuracy, latest attempts</span></div>
+    <div class="tile"><b>${st}</b><span>Day streak · ${S.days.length} ${S.days.length===1?'day':'days'} studied</span></div></div>
+  <section class="card"><h3 class="section-h">Mastery by module</h3><div class="bars">${MODS.map((m,mi)=>{const p=mastery(mi);return `<div class="bar"><span class="mono">${m.code}</span><span class="track2" title="${m.name}"><i style="width:${p}%"></i></span><span class="v">${p}%</span></div>`}).join('')}</div></section>
+  <section class="card"><h3 class="section-h">Session history</h3>${logH}</section>
+  <section class="card"><h3 class="section-h">Back up or move your progress</h3>
+    <p class="prose">Your progress lives in this browser. Save a backup to keep it safe, or to carry it to another phone, browser or the online version.</p>
+    <div class="row-actions">
+      <button class="btn primary" id="cp" style="flex:1 1 160px">Copy backup code</button>
+      ${isFile?`<button class="btn" id="dl" style="flex:1 1 160px">Save backup file</button>`:''}
+    </div>
+    <textarea id="code" class="codebox" readonly aria-label="Backup code" hidden></textarea>
+    <div class="divider mono">Restore</div>
+    <label for="paste" class="hint">Paste a backup code, or choose a backup file.</label>
+    <textarea id="paste" class="codebox" placeholder="SDA1.eyJ4cCI6…" autocomplete="off" spellcheck="false"></textarea>
+    <div class="row-actions">
+      <button class="btn" id="rs" style="flex:1 1 160px">Restore from code</button>
+      <label class="btn" for="rf" style="flex:1 1 160px">Restore from file<input type="file" id="rf" accept=".json,.txt,application/json,text/plain" hidden></label>
+    </div>
+    <p class="hint" id="rmsg" role="status"></p></section>
+  <section class="card"><h3 class="section-h">Appearance</h3><p class="hint">You can also switch any time with the sun and moon button at the top.</p><div class="segctl" role="group" aria-label="Theme">${['system','light','dark'].map(t=>`<button data-t="${t}" aria-pressed="${S.theme===t}">${t==='system'?'Match device':t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+  <section class="card"><h3 class="section-h">Use it as a phone app</h3>
+    <ol class="steps-install"><li><b>iPhone (Safari):</b> tap Share, then Add to Home Screen.</li><li><b>Android (Chrome):</b> tap the ⋮ menu, then Add to Home screen or Install app.</li></ol>
+    <p class="hint">Each browser and device keeps its own progress. Use a backup code to move it between them.</p></section>
+  <section class="card"><h3 class="section-h">Reset progress</h3><p class="hint">Clears XP, scores, history and the review queue on this device. Copy a backup code first if you may want it back.</p><div id="rz"><button class="btn danger" id="r1">Reset progress</button></div></section>`;
+  main.querySelectorAll('.segctl button').forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;save();applyTheme();vMe()});
+  $('#cp').onclick=()=>{const c=encode(), box=$('#code'); box.value=c; box.hidden=false;
+    const fall=()=>{box.focus();box.select();pop('Code selected, copy it')};
+    try{navigator.clipboard.writeText(c).then(()=>pop('Backup code copied'),fall)}catch(e){fall()}};
+  if(isFile) $('#dl').onclick=()=>{try{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='service-design-progress-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);pop('Backup saved')}catch(e){pop('Could not save file')}};
+  const restore=str=>{try{const o=decode(str);o.theme=S.theme;S=o;save();applyTheme();pop('Progress restored');vMe();$('#rmsg').textContent=`Restored ${S.xp} XP and ${Object.keys(S.done).length} completed modules.`}
+    catch(e){$('#rmsg').textContent='That backup could not be read. Paste the whole code, starting with SDA1., or choose a file saved from this app.'}};
+  $('#rs').onclick=()=>restore($('#paste').value);
+  $('#rf').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(String(r.result));r.readAsText(f)};
+  $('#r1').onclick=()=>{$('#rz').innerHTML=`<p style="font-weight:700;margin-bottom:10px">This cannot be undone.</p><div class="row-actions"><button class="btn danger" id="r2">Yes, reset everything</button><button class="btn" id="r3">Keep my progress</button></div>`;
+    $('#r2').onclick=()=>{const th=S.theme;S=fresh();S.theme=th;save();go('me');pop('Progress reset')};
+    $('#r3').onclick=vMe;};
+}
+
+render();
+})();
+
+</script>
+</body>
+</html>

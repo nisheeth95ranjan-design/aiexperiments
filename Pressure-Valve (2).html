@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pressure Valve">
+<meta name="theme-color" content="#F5F4FA">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Pressure Valve</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column, one tap per screen. Each situation has its own colour, carried into its flow. */
+:root{
+  --bg:#F5F4FA; --surface:#FFFFFF; --ink:#1D1E33; --muted:#62647A; --line:#E2E1EC;
+  --coral:#FF6F55; --sun:#F2A81D; --mint:#1FA97F; --sky:#3F82F0; --rose:#E0508E; --lilac:#7E64E8;
+  --tint:12%;
+  --c:var(--mint);
+  --pface:#2A2540; --pb:color-mix(in srgb,var(--c) 24%,#FFFFFF);
+  --display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13142A; --surface:#1D1F3A; --ink:#ECECF7; --muted:#A2A4BD; --line:#2E3152;
+  --coral:#FF8A72; --sun:#F7BE4E; --mint:#4CCB9F; --sky:#6FA2FF; --rose:#F27AAE; --lilac:#A08CFF; --tint:20%; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13142A; --surface:#1D1F3A; --ink:#ECECF7; --muted:#A2A4BD; --line:#2E3152;
+  --coral:#FF8A72; --sun:#F7BE4E; --mint:#4CCB9F; --sky:#6FA2FF; --rose:#F27AAE; --lilac:#A08CFF; --tint:20%; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;overflow-x:hidden;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.blob{position:fixed;width:46vmax;height:46vmax;border-radius:50%;filter:blur(70px);opacity:.28;z-index:0;pointer-events:none;
+  background:var(--c);transition:background 1.2s ease;animation:drift 22s ease-in-out infinite alternate}
+.blob.b1{top:-22vmax;right:-16vmax}
+.blob.b2{bottom:-26vmax;left:-20vmax;background:var(--sun);animation-delay:-11s;opacity:.18}
+@keyframes drift{to{transform:translate(-6vmax,5vmax) scale(1.12)}}
+.wrap{position:relative;z-index:1;max-width:540px;margin:0 auto;padding-block:18px 40px;display:flex;flex-direction:column;gap:26px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--c);outline-offset:3px;border-radius:10px}
+.brand{font-family:var(--display);font-weight:700;font-size:1.15rem;background:none;border:0;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:8px}
+.brand i{width:22px;height:22px;border-radius:7px;background:conic-gradient(var(--coral),var(--sun),var(--mint),var(--sky),var(--lilac),var(--coral));display:inline-block;animation:spin 18s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pill{display:inline-flex;align-items:center;gap:8px;border:0;background:var(--surface);box-shadow:0 2px 10px rgb(30 30 60 / .08);
+  border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer}
+.pill .dot{width:10px;height:10px;border-radius:50%;background:var(--mint);animation:pulse 5s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.8);opacity:.45}}
+
+#view{animation:enter .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes enter{from{opacity:.001;transform:translateY(12px)}}
+h1,h2{font-family:var(--display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.85rem,7vw,2.4rem);line-height:1.08}
+h2{font-size:clamp(1.5rem,5.5vw,1.85rem);line-height:1.12}
+p{margin:0}
+.eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;color:var(--c);margin-bottom:6px}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.screen{display:flex;flex-direction:column;gap:22px}
+
+/* Home tiles */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{--t:var(--mint);position:relative;text-align:left;border:0;border-radius:20px;padding:16px;min-height:118px;cursor:pointer;
+  background:color-mix(in srgb,var(--t) var(--tint),var(--surface));display:flex;flex-direction:column;justify-content:space-between;gap:14px;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s}
+.tile:hover{transform:translateY(-3px);box-shadow:0 10px 24px color-mix(in srgb,var(--t) 22%,transparent)}
+.tile:active{transform:scale(.97)}
+.tile b{font-family:var(--display);font-weight:700;font-size:1.08rem;line-height:1.15}
+.ico{width:40px;height:40px;border-radius:12px;background:var(--t);display:grid;place-items:center;color:#fff}
+.ico svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tile:hover .ico{animation:wiggle .5s}
+@keyframes wiggle{30%{transform:rotate(-8deg)}60%{transform:rotate(6deg)}}
+
+.note{border-radius:18px;padding:14px 16px;background:color-mix(in srgb,var(--lilac) var(--tint),var(--surface));display:flex;gap:12px;align-items:center}
+.note .eyebrow{color:var(--lilac);margin:0 0 2px}
+.note > div{flex:1;min-width:0}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1.3rem;line-height:1;padding:6px}
+
+/* Flow pieces */
+.top{display:flex;align-items:center;gap:12px}
+.back{border:0;background:var(--surface);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none;box-shadow:0 2px 8px rgb(30 30 60 / .07)}
+.back svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.dots{display:flex;gap:6px;flex:1}
+.dots i{height:6px;flex:1;border-radius:3px;background:var(--line);transition:background .4s}
+.dots i.on{background:var(--c)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{text-align:left;border:2px solid transparent;background:var(--surface);border-radius:18px;padding:16px 18px;cursor:pointer;
+  display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgb(30 30 60 / .06);transition:transform .2s, border-color .2s}
+.opt:hover{border-color:var(--c);transform:translateX(3px)}
+.opt:active{transform:scale(.98)}
+.opt .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.opt b{font-weight:600;font-size:1.04rem}
+.opt small{color:var(--muted);font-size:.9rem}
+.opt .go{width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);display:grid;place-items:center;flex:none;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:500;transition:all .2s}
+.chip[aria-pressed=true]{background:var(--c);border-color:var(--c);color:#fff}
+.btn{border:0;border-radius:999px;padding:15px 24px;font-weight:600;font-size:1.02rem;cursor:pointer;background:var(--c);color:#fff;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--c) 35%,transparent);transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:0 2px 8px rgb(30 30 60 / .07)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Tap-through card */
+.card{background:var(--surface);border-radius:24px;padding:28px 22px;min-height:180px;display:flex;flex-direction:column;justify-content:center;gap:10px;
+  box-shadow:0 8px 28px rgb(30 30 60 / .08);animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.94);opacity:.001}}
+.card .big{font-family:var(--display);font-weight:700;font-size:1.45rem;line-height:1.2;text-wrap:balance}
+.card .num{font-family:var(--display);font-weight:700;color:var(--c);font-size:.95rem;font-variant-numeric:tabular-nums}
+
+/* Breath */
+.breath{display:flex;flex-direction:column;align-items:center;gap:18px}
+.orb-box{width:min(70vw,270px);aspect-ratio:1;max-width:100%;display:grid;place-items:center;position:relative}
+.orb-ring{position:absolute;inset:0;border-radius:50%;border:2px dashed color-mix(in srgb,var(--c) 40%,transparent);animation:spin 40s linear infinite}
+.orb{width:40%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#fff 0,color-mix(in srgb,var(--c) 45%,#fff) 25%,var(--c) 75%);
+  box-shadow:0 0 50px color-mix(in srgb,var(--c) 50%,transparent);transition:width 4s ease-in-out}
+.orb.in{width:94%}
+.orb.out{transition-duration:6s}
+.bword{font-family:var(--display);font-weight:700;font-size:1.6rem;min-height:2.2rem;text-align:center}
+.bmeta{color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Timer */
+.clock{font-family:var(--display);font-weight:700;font-size:clamp(4rem,20vw,6rem);line-height:1;font-variant-numeric:tabular-nums;text-align:center;color:var(--c)}
+.ringwrap{display:grid;place-items:center;position:relative;width:min(72vw,280px);aspect-ratio:1;margin:0 auto;max-width:100%}
+.ringwrap svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ringwrap circle{fill:none;stroke-width:8}
+.ringwrap .bgc{stroke:var(--line)}
+.ringwrap .fg{stroke:var(--c);stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.center{text-align:center}
+
+.msg{background:var(--surface);border-radius:16px;padding:16px 18px;white-space:pre-wrap;overflow-wrap:anywhere;border:2px dashed color-mix(in srgb,var(--c) 40%,transparent)}
+.toast{color:var(--c);font-weight:600;min-height:1.4em}
+.tip{background:color-mix(in srgb,var(--c) var(--tint),var(--surface));border-radius:14px;padding:12px 14px;font-size:.94rem}
+.check{display:flex;flex-direction:column;gap:10px}
+.check .opt[aria-pressed=true]{border-color:var(--c)}
+.check .box{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;flex:none;transition:all .2s}
+.check .opt[aria-pressed=true] .box{background:var(--c);border-color:var(--c);color:#fff}
+.check .box::after{content:"";width:10px;height:6px;border:solid currentColor;border-width:0 0 2.5px 2.5px;transform:rotate(-45deg) translate(1px,-1px);opacity:0}
+.check .opt[aria-pressed=true] .box::after{opacity:1}
+.check .opt[aria-pressed=true] b{text-decoration:line-through;color:var(--muted)}
+
+
+/* Intensity scale */
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lvl{--t:var(--mint);border:0;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0}
+.lvn{width:100%;max-width:60px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.3rem;
+  background:color-mix(in srgb,var(--t) 22%,var(--surface));color:var(--ink);transition:transform .25s cubic-bezier(.2,.9,.3,1.4),background .2s}
+.lvl:hover .lvn{transform:scale(1.08)}
+.lvl.picked .lvn{background:var(--t);color:#fff;transform:scale(1.15)}
+.lvl small{font-size:.74rem;color:var(--muted);text-align:center;line-height:1.2}
+/* Grounding tap counter */
+.tapzone{align-self:center;width:min(60vw,220px);aspect-ratio:1;max-width:100%;border-radius:50%;border:0;cursor:pointer;color:#fff;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c) 55%,#fff),var(--c) 70%);box-shadow:0 14px 40px color-mix(in srgb,var(--c) 40%,transparent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:filter .3s}
+.tapzone.done{filter:saturate(1.3) brightness(1.05)}
+.tzn{font-family:var(--display);font-weight:700;font-size:4rem;line-height:1}
+.tzl{font-size:.88rem;opacity:.9}
+.pips{display:flex;justify-content:center;gap:10px}
+.pips i{width:14px;height:14px;border-radius:50%;background:var(--line);transition:background .2s,transform .3s}
+.pips i.on{background:var(--c);transform:scale(1.25)}
+.linkbtn{background:none;border:0;color:var(--muted);cursor:pointer;align-self:center;padding:6px;text-decoration:underline;text-underline-offset:3px}
+/* Before / now */
+.compare{display:flex;gap:28px;justify-content:center;align-items:flex-end;height:120px;margin:6px 0}
+.compare > div{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.cbar{width:46px;height:var(--h);border-radius:10px 10px 4px 4px;background:var(--t);animation:grow .8s cubic-bezier(.2,.8,.2,1)}
+@keyframes grow{from{height:0}}
+.compare small{color:var(--muted);font-variant-numeric:tabular-nums}
+/* Plan timeline */
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.timeline li{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:center;padding:12px 0;position:relative}
+.timeline li:not(:last-child)::after{content:"";position:absolute;left:11px;top:34px;bottom:-10px;width:2px;background:var(--line)}
+.tdot{width:14px;height:14px;border-radius:50%;background:var(--c);margin-left:5px;box-shadow:0 0 0 5px color-mix(in srgb,var(--c) 18%,transparent)}
+.k-break .tdot{background:var(--mint);box-shadow:0 0 0 5px color-mix(in srgb,var(--mint) 18%,transparent)}
+.k-reply .tdot{background:var(--sky);box-shadow:0 0 0 5px color-mix(in srgb,var(--sky) 18%,transparent)}
+.ttxt{font-weight:600;min-width:0}
+.tmin{color:var(--muted);font-variant-numeric:tabular-nums;font-size:.92rem}
+.streak{align-self:flex-start;display:inline-flex;gap:6px;align-items:center;background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.88rem;font-weight:600;box-shadow:0 2px 8px rgb(30 30 60 / .06)}
+.streak i{width:8px;height:8px;border-radius:50%;background:var(--mint)}
+
+/* Puff, the mascot */
+.puff{width:64px;height:auto;flex:none;overflow:visible;animation:bob 4s ease-in-out infinite}
+.puff.cheer{animation:hop .6s ease-in-out 3,bob 4s ease-in-out 1.8s infinite}
+.pbody{fill:var(--pb)}
+.pe,.pm{fill:var(--pface)}
+.pl{fill:none;stroke:var(--pface);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pc{fill:var(--c);opacity:.4}
+.steam{fill:none;stroke:var(--pb);stroke-width:3.5;stroke-linecap:round;opacity:.9}
+.pz{fill:var(--muted);font:700 15px var(--display)}
+.spark{fill:none;stroke:var(--sun);stroke-width:2.6;stroke-linecap:round}
+.eyes{animation:blink 5s infinite;transform-box:view-box;transform-origin:60px 60px}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes hop{40%{transform:translateY(-12px) rotate(-4deg)}70%{transform:translateY(0) rotate(3deg)}}
+.puffrow{display:flex;align-items:center;gap:14px}
+.puffrow.big .puff{width:92px}
+.puffrow.mid{justify-content:center}
+.say{position:relative;background:var(--surface);border-radius:16px;padding:10px 14px;font-weight:500;min-width:0;
+  box-shadow:0 2px 10px rgb(30 30 60 / .07);animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+.say::before{content:"";position:absolute;left:-5px;top:50%;width:12px;height:12px;background:var(--surface);transform:translateY(-50%) rotate(45deg);border-radius:2px}
+.orb{display:grid;place-items:center}
+.orb .puff{width:80%;animation:none}
+footer{font-size:.86rem;color:var(--muted);text-align:center;padding-top:6px}
+footer b{color:var(--ink);user-select:all}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:20;width:100%;height:100%}
+
+@media (max-width:360px){.tiles{grid-template-columns:1fr}.tile{min-height:0;flex-direction:row;align-items:center;justify-content:flex-start}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important}
+  .orb,.orb.out,.ringwrap .fg{transition:none}
+  .orb.in{width:70%}
+}
+</style>
+
+</head>
+<body>
+<div class="blob b1" aria-hidden="true"></div><div class="blob b2" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <button class="brand" id="homeBtn"><i aria-hidden="true"></i>Pressure Valve</button>
+    <button class="pill" id="breatheBtn"><span class="dot"></span>Breathe</button>
+  </header>
+  <main id="view" aria-live="polite"></main>
+  <footer>Feeling unsafe? Tele-MANAS, free and 24/7 in India: <b>14416</b></footer>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const view = $('#view'), root = document.documentElement;
+const KEY='pressure-valve-v2';
+const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+let store={tomorrow:null,sessions:null,met:false};
+try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) store=Object.assign(store,s); }catch(e){}
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){} };
+
+const ICONS={
+  panic:'<path d="M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M3 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0" opacity=".55"/>',
+  much:'<rect x="4" y="4" width="16" height="4" rx="1.5"/><rect x="4" y="10" width="16" height="4" rx="1.5"/><rect x="4" y="16" width="10" height="4" rx="1.5"/>',
+  start:'<path d="M8 5l11 7-11 7z"/>',
+  deadline:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M9 2.5h6"/>',
+  wrong:'<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5v.1"/>',
+  off:'<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>'
+};
+const SIT=[
+  ['panic','I’m panicking','--coral'],
+  ['much','Too much to do','--sun'],
+  ['start','Can’t get started','--mint'],
+  ['deadline','Deadline slipping','--sky'],
+  ['wrong','Something went wrong','--rose'],
+  ['off','Can’t switch off','--lilac']
+];
+const BACK='<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
+
+
+/* ---------- Puff, the mascot ---------- */
+function puff(m){
+  const open='<g class="eyes"><ellipse cx="48" cy="60" rx="4" ry="5.5" class="pe"/><ellipse cx="72" cy="60" rx="4" ry="5.5" class="pe"/><circle cx="49.6" cy="57.6" r="1.5" fill="#fff"/><circle cx="73.6" cy="57.6" r="1.5" fill="#fff"/></g>';
+  const happy='<path d="M43 61q5-7 10 0M67 61q5-7 10 0" class="pl"/>';
+  const shut='<path d="M43 59q5 5 10 0M67 59q5 5 10 0" class="pl"/>';
+  const wink='<g class="eyes"><ellipse cx="48" cy="60" rx="4" ry="5.5" class="pe"/><circle cx="49.6" cy="57.6" r="1.5" fill="#fff"/></g><path d="M67 61q5-7 10 0" class="pl"/>';
+  const M={smile:'<path d="M53 69q7 6 14 0" class="pl"/>',big:'<path d="M51 67q9 12 18 0z" class="pm"/>',o:'<ellipse cx="60" cy="70.5" rx="2.8" ry="3.3" class="pm"/>',
+    flat:'<path d="M54 70q6 1.5 12 0" class="pl"/>',soft:'<path d="M55 69q5 3.5 10 0" class="pl"/>'};
+  const care='<path d="M44 50l8-3.5M76 50l-8-3.5" class="pl"/>', focus='<path d="M44 47l8 3M76 47l-8 3" class="pl"/>';
+  const F={calm:shut+M.soft, happy:happy+M.smile, cheer:happy+M.big, care:open+care+M.soft, focus:open+focus+M.flat, sleepy:shut+M.o, wink:wink+M.smile}[m]||open+M.smile;
+  const extra = m==='sleepy'?'<text x="94" y="32" class="pz">z</text><text x="104" y="20" class="pz" style="font-size:11px">z</text>'
+    : m==='cheer'?'<path d="M12 26v12M6 32h12M106 22v10M101 27h10" class="spark"/>':'';
+  return `<svg class="puff ${m}" viewBox="0 0 120 92" role="img" aria-label="Puff, a small cloud, looking ${m}">
+    <path d="M63 20q-6-5 0-10q5-4 0-8" class="steam"/>
+    <g class="pbody"><circle cx="60" cy="62" r="30"/><circle cx="36" cy="66" r="18"/><circle cx="84" cy="66" r="18"/><circle cx="46" cy="44" r="17"/><circle cx="72" cy="41" r="19"/><rect x="22" y="62" width="76" height="26" rx="13"/></g>
+    <ellipse cx="38" cy="70" rx="6" ry="3.5" class="pc"/><ellipse cx="82" cy="70" rx="6" ry="3.5" class="pc"/>${F}${extra}</svg>`;
+}
+const puffRow=(m,t,cls)=>`<div class="puffrow ${cls||''}">${puff(m)}<p class="say">${t}</p></div>`;
+
+/* ---------- core helpers ---------- */
+let cleanup=[], history=[];
+function color(v){ root.style.setProperty('--c','var('+v+')'); }
+function render(html, keep){
+  cleanup.forEach(f=>f()); cleanup=[];
+  view.innerHTML=html; view.style.animation='none'; void view.offsetWidth; view.style.animation='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function top(n,total,onBack){
+  const d = total? `<div class="dots">${Array.from({length:total},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>`:'<div class="dots"></div>';
+  setTimeout(()=>{ const b=view.querySelector('.back'); if(b) b.onclick=onBack||home; });
+  return `<div class="top"><button class="back" aria-label="Back">${BACK}</button>${d}</div>`;
+}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* A question answered by tapping one option */
+function ask({n,total,back,eyebrow,title,sub,opts,after,puff:pf}){
+  render(`<div class="screen">${top(n,total,back)}
+    ${pf?puffRow(pf[0],pf[1]):''}<div>${eyebrow?`<p class="eyebrow">${eyebrow}</p>`:''}<h2>${title}</h2>${sub?`<p class="muted" style="margin-top:8px">${sub}</p>`:''}</div>
+    <div class="opts">${opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="txt"><b>${o.label}</b>${o.hint?`<small>${o.hint}</small>`:''}</span><span class="go" aria-hidden="true">→</span></button>`).join('')}</div>
+    ${after||''}</div>`);
+  view.querySelectorAll('.opt').forEach(b=>b.onclick=()=>opts[b.dataset.i].go());
+}
+/* Short cards you tap through, one idea at a time */
+function cards({n,total,back,eyebrow,items,doneLabel,onDone,puff:pf}){
+  let i=0;
+  const show=()=>{
+    render(`<div class="screen">${top(n,total,i?()=>{i--;show();}:back)}
+      ${pf?puffRow(pf[0],pf[1]):''}${eyebrow?`<p class="eyebrow" style="margin:0">${eyebrow}</p>`:''}
+      <div class="card"><span class="num">${i+1} of ${items.length}</span><p class="big">${items[i][0]}</p>${items[i][1]?`<p class="muted">${items[i][1]}</p>`:''}</div>
+      <button class="btn" id="nx">${i<items.length-1?(items[i][2]||'Done, next'):(doneLabel||'Done')}</button></div>`);
+    $('#nx').onclick=()=>{ if(i<items.length-1){ i++; show(); } else onDone(); };
+  };
+  show();
+}
+function copyBox(text,label){
+  return `<div class="msg" id="msg">${esc(text)}</div>
+    <div class="row"><button class="btn" id="cp">${label||'Copy message'}</button></div><p class="toast" id="toast" role="status"></p>`;
+}
+function wireCopy(){
+  const b=$('#cp'); if(!b) return;
+  b.onclick=()=>{ const m=$('#msg'), t=$('#toast');
+    const fb=()=>{ const r=document.createRange(); r.selectNodeContents(m); const s=getSelection(); s.removeAllRanges(); s.addRange(r); t.textContent='Selected. Press Ctrl+C or Cmd+C to copy.'; };
+    try{ navigator.clipboard.writeText(m.textContent).then(()=>{ t.textContent='Copied. Paste it into your email or chat.'; burst(20); },fb); }catch(e){ fb(); } };
+}
+function addDays(n){ const d=new Date(); d.setDate(d.getDate()+n); return d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}); }
+
+/* ---------- celebration ---------- */
+const fx=$('#fx'), ctx=fx.getContext('2d'); let parts=[], raf=null;
+function burst(count){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  fx.width=innerWidth*devicePixelRatio; fx.height=innerHeight*devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  const cs=getComputedStyle(root), cols=['--coral','--sun','--mint','--sky','--rose','--lilac'].map(v=>cs.getPropertyValue(v).trim());
+  for(let i=0;i<(count||70);i++) parts.push({x:innerWidth/2,y:innerHeight*.45,vx:(Math.random()-.5)*12,vy:-Math.random()*12-3,r:Math.random()*5+3,c:cols[i%6],a:1,s:Math.random()*6});
+  if(!raf) loop();
+}
+function loop(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=.35; p.vx*=.98; p.a-=.012; p.s+=.15;
+    ctx.globalAlpha=Math.max(p.a,0); ctx.fillStyle=p.c; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.s); ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6); ctx.restore(); });
+  parts=parts.filter(p=>p.a>0&&p.y<innerHeight+20);
+  raf = parts.length? requestAnimationFrame(loop) : (ctx.clearRect(0,0,innerWidth,innerHeight), null);
+}
+
+/* ---------- home ---------- */
+function greet(){ const h=new Date().getHours(); return h<5?'Still up? Let’s go easy.':h<12?'Morning. One thing at a time.':h<17?'Afternoon. You’ve got this.':h<22?'Evening. Nearly there.':'It’s late. Be gentle with yourself.'; }
+function hello(){ if(!store.met){ store.met=true; save(); return 'Hi, I’m Puff! I help you let off steam. What’s up?'; } return greet(); }
+function home(){
+  color('--mint');
+  const t = store.tomorrow && store.tomorrow.date < iso(new Date()) ? store.tomorrow : null;
+  render(`<div class="screen">
+    ${puffRow(new Date().getHours()>=22||new Date().getHours()<5?'sleepy':'happy',hello(),'big')}<div><h1>What’s going on right now?</h1></div>
+    ${t?`<div class="note"><div><p class="eyebrow">Today starts with</p><p><b>${esc(t.text)}</b></p></div><button class="btn" id="tGo" style="padding:10px 16px;background:var(--lilac)">Start</button><button class="x" id="tX" aria-label="Clear">×</button></div>`:''}
+    <div class="tiles">${SIT.map(s=>`<button class="tile" data-go="${s[0]}" style="--t:var(${s[2]})"><span class="ico"><svg viewBox="0 0 24 24">${ICONS[s[0]]}</svg></span><b>${s[1]}</b></button>`).join('')}</div>
+    <p class="muted center" style="font-size:.92rem">Tap one. Everything after this is tapping too.</p>
+    ${sessionsToday()?`<span class="streak" style="align-self:center"><i></i>${sessionsToday()} focus session${sessionsToday()>1?'s':''} today</span>`:''}
+  </div>`);
+  view.querySelectorAll('.tile').forEach(b=>b.onclick=()=>{ const s=SIT.find(x=>x[0]===b.dataset.go); color(s[2]); FLOWS[s[0]](); });
+  if(t){ $('#tGo').onclick=()=>{ color('--mint'); focusTimer({task:t.text,mins:10}); }; $('#tX').onclick=()=>{ store.tomorrow=null; save(); home(); }; }
+}
+
+/* ---------- small senses: sound + vibration ---------- */
+let actx=null;
+function chime(){
+  try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    [523.25,659.25,783.99].forEach((f,i)=>{ const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime+i*.14;
+      o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.12,t+.03); g.gain.exponentialRampToValueAtTime(.001,t+1.1);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t+1.2); });
+  }catch(e){}
+}
+const buzz=ms=>{ try{ navigator.vibrate&&navigator.vibrate(ms); }catch(e){} };
+function sessionsToday(){ const s=store.sessions; return s&&s.date===iso(new Date())?s.n:0; }
+function addSession(){ store.sessions={date:iso(new Date()),n:sessionsToday()+1}; save(); return store.sessions.n; }
+
+/* ---------- breathe ---------- */
+const PATTERNS={
+  calm:{note:'In for 4 · out for 6',rounds:5,phases:[['Breathe in',94,4000],['And slowly out',40,6000]]},
+  sigh:{note:'Two breaths in through the nose, one long sigh out',rounds:5,phases:[['Breathe in',72,2000],['Sip a little more air',94,1000],['Long, slow sigh out',40,6000]]}
+};
+function breathe({onDone,n,total,back,title,pattern}={}){
+  const P=PATTERNS[pattern||'calm']; let r=0, p=-1, tm;
+  render(`<div class="screen">${top(n||0,total||0,back)}
+    <div class="center"><h2>${title||'Just breathe with the circle.'}</h2></div>
+    <div class="breath"><div class="orb-box"><div class="orb-ring"></div><div class="orb" id="orb">${puff('calm')}</div></div>
+      <p class="bword" id="w">Get comfy…</p><p class="bmeta" id="m">${P.note}</p></div>
+    <button class="btn" id="bd">${onDone?'I feel a bit calmer':'Done'}</button></div>`);
+  const orb=$('#orb'), w=$('#w'), m=$('#m');
+  const tick=()=>{
+    p++; if(p>=P.phases.length){ p=0; r++; }
+    if(r>=P.rounds){ orb.style.transitionDuration='3s'; orb.style.width='40%'; orb.innerHTML=puff('happy'); w.textContent='Nicely done.'; m.textContent='Let your shoulders drop.'; buzz([20,60,20]); return; }
+    const [label,width,ms]=P.phases[p];
+    orb.style.transitionDuration=ms+'ms'; orb.style.width=width+'%';
+    w.textContent=label; m.textContent=`Round ${r+1} of ${P.rounds}`; buzz(18);
+    tm=setTimeout(tick,ms);
+  };
+  tm=setTimeout(tick,900); cleanup.push(()=>clearTimeout(tm));
+  $('#bd').onclick=()=>onDone?onDone():home();
+}
+
+/* ---------- timer ---------- */
+function focusTimer({task,mins,isBreak,onEnd,stepLabel,back}){
+  const total=mins*60000; let end=Date.now()+total, left=total, run=true, iv, lock=null, drift=0;
+  const C=2*Math.PI*46;
+  render(`<div class="screen">${top(0,0,back)}
+    ${puffRow(isBreak?'happy':'focus',isBreak?'Stretch with me. The screen can wait.':'I’ll keep time. You keep going.')}<div class="center"><p class="eyebrow">${stepLabel?stepLabel+' · ':''}${isBreak?'Break time':'Just this, for '+mins+' minutes'}</p><h2>${esc(isBreak?'Step away. Stretch. Get water.':task)}</h2></div>
+    <div class="ringwrap"><svg viewBox="0 0 100 100"><circle class="bgc" cx="50" cy="50" r="46"/><circle class="fg" id="fg" cx="50" cy="50" r="46" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
+      <p class="clock" id="clk">${mins}:00</p></div>
+    <p class="muted center" id="nudge">${isBreak?'Come back when the circle fills.':'You only promised these minutes. Stopping after is allowed.'}</p>
+    <div class="row" style="justify-content:center">${isBreak?'':'<button class="btn ghost" id="dr">I got distracted</button>'}<button class="btn ghost" id="pp">Pause</button><button class="btn" id="st">${isBreak?'I’m back':'I’m done'}</button></div></div>`);
+  const clk=$('#clk'), fg=$('#fg'), pp=$('#pp'), nudge=$('#nudge');
+  try{ navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>lock=l).catch(()=>{}); }catch(e){}
+  const draw=()=>{ const s=Math.max(0,Math.ceil(left/1000)); clk.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); fg.style.strokeDashoffset=C*(left/total); };
+  requestAnimationFrame(draw);
+  iv=setInterval(()=>{ if(!run) return; left=end-Date.now(); draw(); if(left<=0){ clearInterval(iv); chime(); buzz([40,80,40]); fin(); } },250);
+  cleanup.push(()=>{ clearInterval(iv); try{ lock&&lock.release(); }catch(e){} });
+  pp.onclick=()=>{ run=!run; if(run){ end=Date.now()+left; pp.textContent='Pause'; } else pp.textContent='Resume'; };
+  const NUDGES=['That’s okay. Minds wander. Back to: ','Noticed. No harm done. Back to: ','Good catch. Gently return to: ','Still counts. Back to: '];
+  if($('#dr')) $('#dr').onclick=()=>{ drift++; nudge.innerHTML=`<b style="color:var(--c)">${NUDGES[(drift-1)%NUDGES.length]}</b>${esc(task)}`; const pr=view.querySelector('.puffrow'); if(pr){ pr.querySelector('.puff').outerHTML=puff('wink'); pr.querySelector('.say').textContent='Caught it! Back we go.'; } view.querySelector('.ringwrap').animate([{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1)'}],{duration:500}); };
+  $('#st').onclick=fin;
+  function fin(){
+    clearInterval(iv);
+    if(onEnd){ if(!isBreak) addSession(); burst(isBreak?0:40); return onEnd(); }
+    if(isBreak) return task ? focusTimer({task,mins:Math.max(mins*2,10)}) : (color('--mint'), start());
+    const n=addSession(); burst();
+    ask({puff:['cheer',n>1?'Look at you go!':'You did it! I knew you could.'],eyebrow:n>1?`That’s ${n} focus sessions today`:'Time’s up',title:'You started. That was the hardest part.',sub:drift?`You came back from ${drift} distraction${drift>1?'s':''}. That’s the real skill.`:'What now?',opts:[
+      {label:'Keep going',hint:`Another ${mins} minutes`,go:()=>focusTimer({task,mins})},
+      {label:'Take a break',hint:'5 minutes away from the screen',go:()=>focusTimer({task,mins:5,isBreak:true})},
+      {label:'I’m done for now',hint:'Back to home',go:()=>{ burst(40); home(); }}
+    ]});
+  }
+}
+
+/* ---------- intensity scale (one tap) ---------- */
+const LV=[['Mild','--mint'],['Uneasy','--sky'],['Strong','--sun'],['Very strong','--coral'],['Overwhelming','--rose']];
+function scale({n,total,back,eyebrow,title,sub,pick,after,puff:pf}){
+  render(`<div class="screen">${top(n,total,back)}
+    ${pf?puffRow(pf[0],pf[1]):''}<div>${eyebrow?`<p class="eyebrow">${eyebrow}</p>`:''}<h2>${title}</h2>${sub?`<p class="muted" style="margin-top:8px">${sub}</p>`:''}</div>
+    <div class="scale">${LV.map((l,i)=>`<button class="lvl" data-i="${i+1}" style="--t:var(${l[1]})"><span class="lvn">${i+1}</span><small>${l[0]}</small></button>`).join('')}</div>
+    ${after||''}</div>`);
+  view.querySelectorAll('.lvl').forEach(b=>b.onclick=()=>{ b.classList.add('picked'); buzz(15); setTimeout(()=>pick(+b.dataset.i),260); });
+}
+
+/* ---------- tap counter for grounding ---------- */
+function tapCount({n,total,back,step,stepsLen,count,title,hint,onDone}){
+  let c=0;
+  render(`<div class="screen">${top(n,total,back)}
+    <div><p class="eyebrow">Grounding · ${step} of ${stepsLen}</p><h2>${title}</h2><p class="muted" style="margin-top:8px">${hint}</p></div>
+    <button class="tapzone" id="tz" aria-label="Tap for each one"><span class="tzn" id="tzn">${count}</span><span class="tzl">tap for each one</span></button>
+    <div class="pips">${Array.from({length:count},()=>'<i></i>').join('')}</div>
+    <button class="linkbtn" id="sk">Skip this one</button></div>`);
+  const pips=view.querySelectorAll('.pips i'), tz=$('#tz'), tzn=$('#tzn');
+  tz.onclick=()=>{ if(c>=count) return; pips[c].classList.add('on'); c++; buzz(12);
+    tz.animate([{transform:'scale(.92)'},{transform:'scale(1)'}],{duration:260,easing:'ease-out'});
+    tzn.textContent=count-c||'✓';
+    if(c>=count){ tz.classList.add('done'); setTimeout(onDone,650); } };
+  $('#sk').onclick=onDone;
+}
+
+/* ---------- 1. Panic ---------- */
+let pStart=0;
+function panic(){
+  scale({n:1,total:5,puff:['care','I’m right here with you. We’ll do this together.'],title:'How strong is the feeling right now?',sub:'Just tap. No right answer.',
+    pick:v=>{ pStart=v; panicBreathe(); },
+    after:`<p class="tip">If you have chest pain that’s new, severe or spreading, or you feel faint, call a doctor or <b>112</b> now.</p>`});
+}
+function panicBreathe(){
+  const strong=pStart>=3;
+  breathe({n:2,total:5,back:panic,pattern:strong?'sigh':'calm',
+    title:strong?'This breath calms your body fastest.':'Let’s slow your body down.',onDone:()=>ground(0)});
+}
+const SENSES=[
+  [5,'Look around. Find 5 things you can see.','A lamp. A plant. The colour of your sleeve.'],
+  [4,'Notice 4 things you can feel.','Your feet on the floor. The chair. Your hands. The air.'],
+  [3,'Listen for 3 sounds.','A fan. Traffic. Your own breathing.'],
+  [2,'Find 2 things you can smell.','Or two smells you like, if nothing’s around.'],
+  [1,'Notice 1 thing you can taste.','Or take one slow sip of water.']
+];
+function ground(i){
+  if(i>=SENSES.length) return thoughts();
+  const [count,title,hint]=SENSES[i];
+  tapCount({n:3,total:5,back:i?()=>ground(i-1):panicBreathe,step:i+1,stepsLen:5,count,title,hint,onDone:()=>ground(i+1)});
+}
+const THOUGHTS=[
+  ['“I’m going to get in trouble”','That’s a worry, not a fact.','Most work problems end in a conversation, not a disaster. You can handle a conversation.'],
+  ['“I can’t cope with all this”','You don’t have to cope with all of it.','Only the next ten minutes. That part, you can do.'],
+  ['“Everyone will see I’m failing”','Struggling isn’t failing.','People notice you far less than it feels. And they struggle too, quietly.'],
+  ['“Something is wrong with me”','Your body’s alarm is just too loud right now.','Panic is uncomfortable, not dangerous. It rises, peaks and fades. It’s already fading.']
+];
+function thoughts(){
+  ask({n:4,total:5,back:()=>ground(4),puff:['care','Nicely done. Thoughts aren’t facts. Which one is loudest?'],title:'What’s your mind telling you?',
+    opts:[...THOUGHTS.map(t=>({label:t[0],go:()=>cards({n:4,total:5,back:thoughts,items:[[t[1],t[2]]],doneLabel:'Okay',onDone:recheck})})),
+      {label:'Nothing specific',hint:'That’s fine too',go:recheck}]});
+}
+function recheck(){
+  scale({n:5,total:5,back:thoughts,title:'How strong is it now?',pick:v=>{
+    const d=pStart-v;
+    if(d>0) burst(50);
+    render(`<div class="screen">${top(5,5,recheck)}
+      ${puffRow(d>0?'cheer':'care',d>0?'Look at that! Your body is calming down.':'I’m still here. We’ll ride this wave together.')}<div class="card"><span class="num">${d>0?'It came down':'Still there, and that’s okay'}</span>
+        <div class="compare"><div><span class="cbar" style="--h:${pStart*20}%;--t:var(${LV[pStart-1][1]})"></span><small>Before · ${pStart}</small></div>
+        <div><span class="cbar" style="--h:${v*20}%;--t:var(${LV[v-1][1]})"></span><small>Now · ${v}</small></div></div>
+        <p class="big">${d>0?`From ${pStart} to ${v}. Your body is settling.`:'Some waves take a little longer. You’re still riding it.'}</p></div>
+      <div class="opts">${d>0?`
+        <button class="opt" id="o1"><span class="txt"><b>Find one small next step</b><small>Gently, no pressure</small></span><span class="go">→</span></button>
+        <button class="opt" id="o2"><span class="txt"><b>Sort out my workload</b><small>A few quick questions</small></span><span class="go">→</span></button>
+        <button class="opt" id="o3"><span class="txt"><b>I’m okay for now</b><small>Back to home</small></span><span class="go">→</span></button>`:`
+        <button class="opt" id="o1"><span class="txt"><b>Breathe a little longer</b><small>Another calm minute</small></span><span class="go">→</span></button>
+        <button class="opt" id="o2"><span class="txt"><b>Take a 5 minute break</b><small>Walk, stretch, get water</small></span><span class="go">→</span></button>
+        <button class="opt" id="o3"><span class="txt"><b>Talk to someone</b><small>A friend, or Tele-MANAS: 14416</small></span><span class="go">→</span></button>`}</div></div>`);
+    if(d>0){ $('#o1').onclick=()=>{ color('--mint'); start(); }; $('#o2').onclick=()=>{ color('--sun'); much(); }; $('#o3').onclick=home; }
+    else { $('#o1').onclick=()=>breathe({pattern:'sigh',title:'Another minute. No rush.',onDone:recheck});
+      $('#o2').onclick=()=>focusTimer({task:'',mins:5,isBreak:true,onEnd:recheck});
+      $('#o3').onclick=()=>cards({back:recheck,items:[['Reach out to someone you trust.','A quick “Having a rough moment, can you talk?” is enough.'],['Tele-MANAS is free and open 24/7.','Call 14416 (India). You don’t need to be in crisis to call.']],doneLabel:'Back to home',onDone:home}); }
+  }});
+}
+
+/* ---------- 2. Too much to do ---------- */
+let M={};
+function much(){
+  M={letgo:[]};
+  ask({n:1,total:5,puff:['happy','Big pile? Let’s shrink it together.'],title:'Roughly how much is on your plate?',opts:[
+    ['1 to 3 things','That’s manageable. It just feels heavy right now.'],
+    ['4 to 7 things','A busy stretch. We’ll find what matters today.'],
+    ['8 or more','That’s a lot. Most of it can wait. We’ll find what can’t.'],
+    ['I’ve lost count','That fog is the overwhelm talking. A few questions will clear it.']
+  ].map(o=>({label:o[0],go:()=>{ M.note=o[1]; due(); }}))});
+}
+function due(){
+  ask({n:2,total:5,back:much,eyebrow:M.note,title:'Is anything due in the next 24 hours?',opts:[
+    {label:'Yes',go:()=>{ M.due=true; canFinish(); }},
+    {label:'No',go:()=>{ M.due=false; waiting(); }},
+    {label:'Not sure',hint:'We’ll check together, quickly',go:()=>cards({n:2,total:5,back:due,items:[
+      ['Open your calendar and inbox.','You’re only looking for due dates. Don’t reply to anything yet.'],
+      ['Look at the next 24 hours only.','Ignore next week. That’s future-you’s job.']
+    ],doneLabel:'Checked',onDone:()=>{ M.note='Okay, now you know.'; due(); }})}
+  ]});
+}
+function canFinish(){
+  ask({n:2,total:5,back:due,title:'Can you finish it in time?',opts:[
+    {label:'Yes, if I focus',hint:'We’ll put it first',go:waiting},
+    {label:'Probably not',hint:'Tell them early. I’ll write the message',go:()=>{ color('--sky'); deadline(); }}
+  ]});
+}
+function waiting(){
+  ask({n:3,total:5,back:M.due?canFinish:due,title:'Is anyone waiting on a reply from you?',opts:[
+    {label:'Yes',hint:'A two-line reply buys you calm',go:()=>{ M.wait=true; letGo(); }},
+    {label:'No',go:()=>{ M.wait=false; letGo(); }}
+  ]});
+}
+const LETGO=['Replying to every email today','Making it perfect','Optional meetings','Tidying my inbox','Things nobody asked for','Saying yes to new requests'];
+function letGo(){
+  const draw=()=>{
+    render(`<div class="screen">${top(4,5,waiting)}
+      <div><p class="eyebrow">Permission granted</p><h2>What can you let go of today?</h2><p class="muted" style="margin-top:8px">Tap any that apply. Dropping things is a skill, not a failure.</p></div>
+      <div class="chips" id="ch">${LETGO.map(l=>`<button class="chip" aria-pressed="${M.letgo.includes(l)}">${l}</button>`).join('')}</div>
+      <button class="btn" id="nx">${M.letgo.length?'Build my plan':'Skip, build my plan'}</button></div>`);
+    $('#ch').onclick=e=>{ const c=e.target.closest('.chip'); if(!c) return; const t=c.textContent;
+      M.letgo=M.letgo.includes(t)?M.letgo.filter(x=>x!==t):[...M.letgo,t]; buzz(10); draw(); };
+    $('#nx').onclick=plan;
+  };
+  draw();
+}
+function buildPlan(){
+  const s=[];
+  if(M.wait) s.push({kind:'reply',title:'Send quick “I’m on it” replies',mins:5});
+  s.push({kind:'focus',title:M.due?'Work on the thing due today':'Work on your most important task',mins:25});
+  s.push({kind:'break',title:'Break. Away from the screen',mins:5});
+  s.push({kind:'focus',title:M.due?'Keep going on the thing due today':'Knock out two quick tasks',mins:25});
+  return s;
+}
+function plan(){
+  const s=buildPlan(), totalMin=s.reduce((a,x)=>a+x.mins,0);
+  render(`<div class="screen">${top(5,5,letGo)}
+    ${puffRow('cheer','I made you a plan! Just follow the dots.')}<div><p class="eyebrow">Your next hour, sorted</p><h2>Here’s the plan. Just follow it.</h2><p class="muted" style="margin-top:8px">About ${totalMin} minutes. Everything else can wait until after.</p></div>
+    <ol class="timeline">${s.map(x=>`<li class="k-${x.kind}"><span class="tdot"></span><span class="ttxt">${x.title}</span><span class="tmin">${x.mins} min</span></li>`).join('')}</ol>
+    ${M.letgo.length?`<div class="tip"><b>Letting go today:</b> ${M.letgo.map(esc).join(' · ')}</div>`:''}
+    <button class="btn" id="go">Start my plan</button></div>`);
+  $('#go').onclick=()=>runPlan(s,0);
+}
+function runPlan(s,i){
+  if(i>=s.length){ burst(100); chime();
+    return ask({puff:['cheer','A whole hour, done! I’m so proud of you.'],eyebrow:'Plan complete',title:'You turned a pile into progress.',sub:'Look at what you just did in one hour.',opts:[
+      {label:'Plan another hour',go:plan},{label:'Take a proper break',hint:'15 minutes',go:()=>focusTimer({task:'',mins:15,isBreak:true,onEnd:home})},{label:'Back to home',go:home}]}); }
+  const x=s[i], lbl=`Step ${i+1} of ${s.length}`, next=()=>runPlan(s,i+1);
+  if(x.kind==='reply') return holding({stepLabel:lbl,onNext:next});
+  focusTimer({task:x.title,mins:x.mins,isBreak:x.kind==='break',stepLabel:lbl,onEnd:next,back:plan});
+}
+function holding({stepLabel,onNext}){
+  let when='by end of day';
+  const draw=()=>{
+    render(`<div class="screen">${top(0,0,plan)}
+      <div><p class="eyebrow">${stepLabel} · 5 minutes</p><h2>Send them a quick heads-up.</h2><p class="muted" style="margin-top:8px">People relax when they know it’s coming. So will you.</p></div>
+      <div class="chips" id="ch">${['by end of day','by tomorrow morning','by tomorrow evening'].map(w=>`<button class="chip" aria-pressed="${w===when}">${w}</button>`).join('')}</div>
+      ${copyBox(`Hi, thanks for your patience. I’m on it and will get back to you ${when}.`)}
+      <button class="btn ghost" id="nx">Sent. Next step</button></div>`);
+    $('#ch').onclick=e=>{ const c=e.target.closest('.chip'); if(c){ when=c.textContent; draw(); } };
+    wireCopy(); $('#nx').onclick=onNext;
+  };
+  draw();
+}
+
+/* ---------- 3. Can't start ---------- */
+let S={};
+const BLOCKS=[
+  ['It feels too big','Big tasks shrink once they have a shape.',['Write just the headings','Do the easiest part first','Aim for one paragraph or one slide']],
+  ['I don’t know where to begin','Questions turn fog into a list.',['Write 3 questions you need answered','Look at a similar past example','Ask someone one quick question']],
+  ['I’m tired or bored','A tiny reset beats forcing it.',['Stand up and stretch, then start','Move to a different spot','Put on music without lyrics']],
+  ['I’m worried it won’t be good','You can’t edit a blank page.',['Write the worst first draft, on purpose','Aim for done, not perfect','Make a rough version just for you']],
+  ['Too many distractions','Make focus the easy choice.',['Put your phone in another room','Keep one tab open, close the rest','Headphones on, notifications off']],
+  ['I’m waiting on someone','Unblock what you can.',['Send the follow-up message now','Work on the part that isn’t blocked','Prepare so you’re ready when they reply']]
+];
+function start(){
+  S={};
+  ask({n:1,total:4,puff:['happy','Starting is the hardest bit. I’ll help.'],title:'How’s your energy right now?',sub:'This sets how long your first session is.',opts:[
+    {label:'Low',hint:'5 minute sessions',go:()=>{ S.mins=5; block(); }},
+    {label:'Okay',hint:'10 minute sessions',go:()=>{ S.mins=10; block(); }},
+    {label:'Good',hint:'25 minute sessions',go:()=>{ S.mins=25; block(); }}
+  ]});
+}
+function block(){
+  ask({n:2,total:4,back:start,title:'What’s getting in the way?',opts:BLOCKS.map(b=>({label:b[0],go:()=>moves(b)}))});
+}
+function moves(b){
+  ask({n:3,total:4,back:block,eyebrow:b[1],title:'Pick your first move.',sub:'Choose the one that feels easiest. Easy is the point.',
+    opts:b[2].map(m=>({label:m,go:()=>{ S.task=m; setup(); }}))});
+}
+function setup(){
+  const items=['Phone face down or out of reach','Close what you don’t need','Water within reach'], on=items.map(()=>false);
+  const draw=()=>{
+    render(`<div class="screen">${top(4,4,block)}
+      <div><p class="eyebrow">10-second setup</p><h2>Clear the runway.</h2><p class="muted" style="margin-top:8px">Tap what you’ve done. Skipping is fine.</p></div>
+      <div class="check">${items.map((t,i)=>`<button class="opt" data-i="${i}" aria-pressed="${on[i]}"><span class="box"></span><span class="txt"><b>${t}</b></span></button>`).join('')}</div>
+      <div class="tip"><b>First move:</b> ${esc(S.task)}</div>
+      <button class="btn" id="go">Start ${S.mins} minutes</button></div>`);
+    view.querySelectorAll('.check .opt').forEach(b=>b.onclick=()=>{ on[b.dataset.i]=!on[b.dataset.i]; buzz(10); draw(); });
+    $('#go').onclick=()=>focusTimer({task:S.task,mins:S.mins});
+  };
+  draw();
+}
+
+/* ---------- 4. Deadline slipping ---------- */
+function deadline(){
+  ask({n:1,total:3,puff:['care','Deadlines slip for everyone. Let’s handle it calmly.'],title:'What would help most?',sub:'Telling them early is what keeps trust. You’ll get a message ready to send.',opts:[
+    {label:'More time',hint:'Move the whole deadline',go:()=>dlWhen('time')},
+    {label:'Part now, rest later',hint:'Send the most important bit on time',go:()=>dlWhen('split')},
+    {label:'Share a rough draft',hint:'Show progress and get early feedback',go:()=>dlWhen('draft')}
+  ]});
+}
+function dlWhen(plan){
+  const d=[1,2,3,7];
+  ask({n:2,total:3,back:deadline,title: plan==='time'?'How much more time do you need?':'When could the rest be ready?',sub:'Pick a little more than you think. Buffer is kindness to yourself.',
+    opts:d.map(x=>({label:x===7?'About a week':x===1?'One more day':x+' more days',hint:addDays(x),go:()=>dlMsg(plan,addDays(x))}))});
+}
+function dlMsg(plan,date){
+  const T={
+    time:`Hi, a quick heads-up: this is taking longer than I planned, and I want to flag it early. I can have it to you by ${date}.\n\nIf that doesn’t work, tell me which part matters most and I’ll send that first.`,
+    split:`Hi, a quick update: I can send the most important part by the original deadline, and the rest by ${date}.\n\nDoes that split work for you?`,
+    draft:`Hi, sharing an early draft so you can see where this is heading. A few parts are still rough.\n\nI’ll send the finished version by ${date}. Any early feedback would really help.`
+  };
+  render(`<div class="screen">${top(3,3,()=>dlWhen(plan))}
+    <div><p class="eyebrow">Ready to send</p><h2>Here’s your message.</h2></div>
+    ${copyBox(T[plan])}
+    <p class="tip">Add the project name when you paste it. Most people reply to messages like this with “Thanks for the heads-up.”</p>
+    <button class="btn ghost" id="nx">Now help me get started</button></div>`);
+  wireCopy(); $('#nx').onclick=()=>{ color('--mint'); start(); };
+}
+
+/* ---------- 5. Something went wrong ---------- */
+function wrong(){
+  ask({n:1,total:2,puff:['care','Oof. That’s a lot to carry. Tell me what happened.'],title:'What happened?',opts:[
+    {label:'I made a mistake',go:mistake},
+    {label:'I got harsh feedback',go:feedback},
+    {label:'A tough conversation is coming',go:talk}
+  ]});
+}
+function mistake(){
+  cards({n:2,total:2,back:wrong,eyebrow:'You made a mistake',items:[
+    ['Almost every mistake at work can be fixed.','Feeling awful about it is a sign you care, not that you’re bad at this.'],
+    ['Telling someone early makes it smaller.','Hiding it is what turns a mistake into a problem.'],
+    ['Come with what you’re doing about it.','Even “I’m looking into it” counts as a plan.']
+  ],doneLabel:'Get my message',onDone:()=>{
+    render(`<div class="screen">${top(2,2,wrong)}<div><h2>Flag it early. Here’s how.</h2></div>
+      ${copyBox('Hi, I want to flag something early. I found an error in my work on this. I’m already working on a fix and will update you by end of day.\n\nHappy to talk it through if helpful.')}
+      <button class="btn ghost" id="nx">Breathe for a minute</button></div>`);
+    wireCopy(); $('#nx').onclick=()=>breathe({onDone:home});
+  }});
+}
+function feedback(){
+  ask({n:2,total:2,back:wrong,title:'Was any of it fair?',sub:'Take your time. You don’t have to reply today.',opts:[
+    {label:'Some of it',go:()=>cards({back:feedback,items:[
+      ['Keep the useful part. Leave the tone.','Feedback can be clumsy and still contain one good idea.'],
+      ['Pick one thing to change.','Not ten. One is enough to show you heard it.'],
+      ['It’s about the work, not about you.','One piece of work is never the whole story of you.']
+    ],onDone:()=>{ burst(30); home(); }})},
+    {label:'None of it',go:()=>cards({back:feedback,items:[
+      ['Wait a day before replying.','Calm replies land better, and you’ll be clearer tomorrow.'],
+      ['Ask one question to understand it.','“Can you show me an example?” is calm and fair.'],
+      ['Their view is one view.','Talk to someone you trust for a second opinion.']
+    ],onDone:home})},
+    {label:'Not sure yet',go:()=>cards({back:feedback,items:[
+      ['That’s fine. You don’t need to decide now.','Strong feelings fade. Clarity comes after.'],
+      ['Come back to it tomorrow.','Read it once more, with fresh eyes.']
+    ],onDone:home})}
+  ]});
+}
+function talk(){
+  cards({n:2,total:2,back:wrong,eyebrow:'Before a tough conversation',items:[
+    ['Decide what you want from it.','One outcome. For example: a new deadline, or clearer priorities.'],
+    ['Open with the situation, not blame.','“Here’s where things stand” works better than “You never…”.'],
+    ['You can always pause.','“Let me think about that and come back to you” is a complete answer.']
+  ],doneLabel:'Breathe before I go in',onDone:()=>breathe({onDone:home,title:'One minute before you walk in.'})});
+}
+
+/* ---------- 6. Can't switch off ---------- */
+function off(){
+  const items=['Silence work notifications','Close work tabs and apps','Glance at tomorrow’s calendar','Say it out loud: “Done for today.”'];
+  const on=items.map(()=>false);
+  const draw=()=>{
+    const all=on.every(Boolean);
+    render(`<div class="screen">${top(1,3)}
+      ${puffRow('calm','Let’s put work to bed for today.')}<div><p class="eyebrow">Close the day</p><h2>Tap each one as you do it.</h2></div>
+      <div class="check">${items.map((t,i)=>`<button class="opt" data-i="${i}" aria-pressed="${on[i]}"><span class="box"></span><span class="txt"><b>${t}</b></span></button>`).join('')}</div>
+      <button class="btn" id="nx">${all?'Next':'Skip the rest'}</button></div>`);
+    view.querySelectorAll('.check .opt').forEach(b=>b.onclick=()=>{ on[b.dataset.i]=!on[b.dataset.i]; draw(); });
+    $('#nx').onclick=offDay;
+  };
+  draw();
+}
+function offDay(){
+  const say={
+    good:'Enjoy that. Notice what made it work.',
+    mixed:'Most days are. You moved some things forward, and that’s real.',
+    rough:'Tough days end too. Tomorrow is a fresh page.'
+  };
+  ask({n:2,total:3,back:off,title:'How was today?',opts:[
+    {label:'Pretty good',go:()=>offNext(say.good)},
+    {label:'Mixed',go:()=>offNext(say.mixed)},
+    {label:'Rough',go:()=>offNext(say.rough)}
+  ]});
+}
+function offNext(line){
+  const firsts=['Pick up where I stopped','Reply to the most urgent message','Plan my day for 5 minutes','Do the hardest task first'];
+  ask({n:3,total:3,back:offDay,eyebrow:line,title:'Tomorrow starts with…',sub:'You’ll see it here in the morning, so your head can let go of it tonight.',
+    opts:firsts.map(f=>({label:f,go:()=>{ store.tomorrow={text:f,date:iso(new Date())}; save(); closed(f); }}))});
+}
+function closed(f){
+  burst(90);
+  render(`<div class="screen">${top(0,0)}
+    ${puffRow('sleepy','Goodnight, work. See you tomorrow.','mid')}<div class="center"><p class="eyebrow">Day closed</p><h1>That’s enough for today.</h1></div>
+    <div class="card" style="text-align:center"><p class="muted">Tomorrow starts with</p><p class="big">${esc(f)}</p></div>
+    <p class="tip">If a work thought pops up tonight, tell it: “Noted. Tomorrow.” Then let it go.</p>
+    <div class="row" style="justify-content:center"><button class="btn ghost" id="br">One minute of breathing</button><button class="btn" id="h">Home</button></div></div>`);
+  $('#br').onclick=()=>breathe({onDone:home}); $('#h').onclick=home;
+}
+
+const FLOWS={panic,much,start,deadline,wrong,off};
+$('#homeBtn').onclick=home;
+$('#breatheBtn').onclick=()=>{ color('--mint'); breathe(); };
+home();
+})();
+</script>
+
+</body>
+</html>
