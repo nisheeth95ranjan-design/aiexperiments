@@ -59,12 +59,21 @@ p{margin:0}
 .top-title{flex:1;min-width:0;font-family:var(--f-display);font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-title small{display:block;font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
 .xp{font-family:var(--f-mono);font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+.iconbtn svg{width:20px;height:20px}
 .iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
 .iconbtn svg{width:18px;height:18px}
 .strip{max-width:720px;margin:0 auto;display:flex;gap:3px;padding-bottom:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.strip i{flex:1;height:4px;border-radius:2px;background:var(--sunk)}
-.strip i.on{background:var(--accent)}
-.strip i.now{background:var(--ink)}
+.strip button{flex:1;min-width:0;height:20px;padding:8px 0;border:0;border-radius:2px;background:var(--sunk);background-clip:content-box;cursor:pointer}
+.strip button.on{background-color:var(--accent)}
+.strip button.skip{background-color:var(--signal)}
+.strip button.now{background-color:var(--ink)}
+.strip button:hover:not(.now){background-color:var(--muted)}
+.nav-slot{display:flex;flex-direction:column;gap:6px;position:sticky;bottom:0;z-index:5;margin:0 -18px -22px;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r);box-shadow:0 -8px 16px -12px rgba(0,0,0,.25)}
+.navrow{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:10px}
+.navrow .btn{padding-inline:16px}
+.navrow .btn svg{width:18px;height:18px;flex-shrink:0}
+.navhint{font-size:12px;color:var(--muted);text-align:center}
+@media (hover:none){.navhint{display:none}}
 
 /* main */
 main{max-width:720px;margin:0 auto;padding-block:20px 8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
@@ -1304,9 +1313,10 @@ const TITLES={learn:['Service Design Academy','Expert curriculum'],review:['Revi
 function renderTop(){
   if(sess){
     const n=sess.steps.length;
-    top.innerHTML=`<div class="top-in"><button class="iconbtn" id="exit" aria-label="Exit">${I.x}</button><div class="top-title">${sess.title}<small>${sess.code} · Step ${sess.k+1} of ${n}</small></div><div class="xp" id="xp">${S.xp} XP</div><button class="iconbtn" id="themebtn" aria-label="Toggle theme"></button></div>
-    <div class="strip">${sess.steps.map((_,j)=>`<i class="${j<sess.k?'on':j===sess.k?'now':''}"></i>`).join('')}</div>`;
-    $('#exit').onclick=()=>go(sess.kind==='module'?'learn':sess.kind==='review'?'review':'learn');
+    top.innerHTML=`<div class="top-in"><button class="iconbtn" id="exit" aria-label="${sess.k===0?'Exit':'Previous step'}">${NAVI.l}</button><div class="top-title">${sess.title}<small>${sess.code} · Step ${sess.k+1} of ${n}</small></div><div class="xp" id="xp">${S.xp} XP</div><button class="iconbtn" id="themebtn" aria-label="Toggle theme"></button></div>
+    <div class="strip" role="group" aria-label="Jump to step">${sess.steps.map((x,j)=>{const seen=sess.seen&&sess.seen[j], done=seen&&(x.s.t==='c'||(sess.snap&&sess.snap[j]));const c=j===sess.k?'now':done?'on':seen?'skip':'';return `<button class="${c}" data-j="${j}" aria-label="Go to step ${j+1}${c==='skip'?' (skipped)':''}" ${j===sess.k?'aria-current="step"':''}></button>`}).join('')}</div>`;
+    top.querySelectorAll('.strip button').forEach(b=>b.onclick=()=>goStep(+b.dataset.j));
+    $('#exit').onclick=()=>{if(sess.k>0)prevStep();else go(sess.kind==='module'?'learn':sess.kind==='review'?'review':'learn')};
   } else {
     const [t,s]=TITLES[view];
     top.innerHTML=`<div class="top-in"><div class="mark" aria-hidden="true">SD</div><div class="top-title">${t}<small>${s}</small></div><div class="xp" id="xp">${S.xp} XP</div><button class="iconbtn" id="themebtn" aria-label="Toggle theme"></button></div>`;
@@ -1363,6 +1373,7 @@ function startReview(){const steps=S.missed.map(id=>{const [mi,i]=id.split('.').
 function startExam(){begin({kind:'exam',title:'Mastery exam',code:'Exam',steps:shuffle(allQ()).slice(0,20)})}
 
 function renderStep(){
+  sess.snap=sess.snap||{}; sess.seen=sess.seen||{}; sess.seen[sess.k]=1;
   renderTop(); window.scrollTo(0,0);
   const st=sess.steps[sess.k], s=st.s, m=MODS[st.mi];
   const tag=`${m.code} · ${pad(st.i+1)}`;
@@ -1371,9 +1382,28 @@ function renderStep(){
   const eb=`<div class="eyebrow mono"><span class="kind ${kc}">${kl}</span><span>${tag}</span>${sess.kind!=='module'?`<span>${m.name}</span>`:''}</div>`;
   const card=document.createElement('article'); card.className='card fade';
   main.innerHTML=''; main.appendChild(card);
-  ({c:rConcept,q:rMCQ,m:rMatch,s:rSort,o:rOrder})[s.t](card,s,eb,st);
+  if(sess.snap[sess.k]) card.innerHTML=sess.snap[sess.k];
+  else ({c:rConcept,q:rMCQ,m:rMatch,s:rSort,o:rOrder})[s.t](card,s,eb,st);
+  let ns=card.querySelector('.nav-slot'); if(!ns){ns=document.createElement('div');ns.className='nav-slot';card.appendChild(ns)}
+  ns.innerHTML=navHTML(s.t==='c'||!!sess.snap[sess.k]); bindNav();
 }
-function nextStep(){if(!sess)return;sess.k++; if(sess.k>=sess.steps.length) finish(); else {if(sess.kind==='module'){S.cur={mi:sess.mi,k:sess.k,ok:sess.ok,n:sess.n,gained:sess.gained,at:Date.now()};save()} renderStep()}}
+const NAVI={l:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',r:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'};
+function navHTML(answered){
+  const last=sess.k===sess.steps.length-1;
+  const fwd=answered?(last?'Finish':'Continue'):(last?'Skip and finish':'Skip for now');
+  return `<div class="navrow"><button class="btn" id="bk" ${sess.k===0?'disabled':''} aria-label="Previous step">${NAVI.l}Back</button><button class="btn ${answered?'primary':'ghost'}" id="nx">${fwd}${NAVI.r}</button></div><span class="navhint mono">← → keys also work</span>`;
+}
+function bindNav(){const b=$('#bk'),n=$('#nx');if(b)b.onclick=prevStep;if(n)n.onclick=nextStep}
+function saveCur(){if(sess&&sess.kind==='module'){S.cur={mi:sess.mi,k:sess.k,ok:sess.ok,n:sess.n,gained:sess.gained,at:Date.now()};save()}}
+function prevStep(){if(!sess||sess.k===0)return;sess.k--;saveCur();renderStep()}
+function goStep(j){if(!sess||j===sess.k||j<0||j>=sess.steps.length)return;sess.k=j;saveCur();renderStep()}
+document.addEventListener('keydown',e=>{
+  if(!sess||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+  if(e.key==='ArrowLeft'){e.preventDefault();prevStep()}
+  else if(e.key==='ArrowRight'){e.preventDefault();nextStep()}
+});
+function nextStep(){if(!sess)return;sess.k++; if(sess.k>=sess.steps.length) finish(); else {saveCur(); renderStep()}}
 
 function record(st,ok){
   const id=st.mi+'.'+st.i, val=XPV[st.s.t]||10;
@@ -1384,9 +1414,10 @@ function record(st,ok){
 }
 function feedback(card,ok,title,text){
   const slot=card.querySelector('.fb-slot');
-  slot.innerHTML=`<div class="fb ${ok?'ok':'no'}" role="status"><strong>${title}</strong><span>${text||''}</span></div><button class="btn primary block" id="nx">${sess.k===sess.steps.length-1?'Finish':'Continue'}</button>`;
-  $('#nx').onclick=nextStep;
-  slot.scrollIntoView({behavior:'smooth',block:'nearest'});
+  slot.innerHTML=`<div class="fb ${ok?'ok':'no'}" role="status"><strong>${title}</strong><span>${text||''}</span></div>`;
+  const ns=card.querySelector('.nav-slot'); if(ns){ns.innerHTML=navHTML(true);bindNav()}
+  sess.snap[sess.k]=card.innerHTML; renderTop();
+  (ns||slot).scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 /* concept */
@@ -1398,8 +1429,7 @@ function rConcept(card,s,eb){
   if(s.note) h+=`<aside class="note expert"><span class="mono">Expert lens</span><div>${s.note}</div></aside>`;
   if(s.ex) h+=`<aside class="note field"><span class="mono">In practice</span><div>${s.ex}</div></aside>`;
   if(s.refs) h+=`<div class="refs"><span class="mono">Sources</span>${s.refs.map(r=>`<span>${r}</span>`).join('')}</div>`;
-  h+=`<button class="btn primary block" id="nx">${sess.k===sess.steps.length-1?'Finish':'Continue'}</button>`;
-  card.innerHTML=h; $('#nx').onclick=nextStep;
+  card.innerHTML=h;
 }
 
 /* multiple choice */
@@ -1480,6 +1510,7 @@ function rOrder(card,s,eb,st){
 
 /* finish */
 function finish(){
+  const skipped=sess.steps.filter((x,j)=>x.s.t!=='c'&&!(sess.snap&&sess.snap[j])).length;
   const k=sess.kind, ok=sess.ok, n=sess.n, pct=n?Math.round(ok/n*100):100;
   let bonus=0, nextMi=null, title;
   if(k==='module'){
@@ -1498,7 +1529,7 @@ function finish(){
     <span class="mono" style="color:var(--accent)">${k==='module'?'Module complete':k==='exam'?'Exam result':'Review complete'}</span>
     <h2>${title}</h2>
     <div class="big">${pct}%</div>
-    <p class="lede">${verdict}</p>
+    <p class="lede">${verdict}${skipped?` You skipped ${skipped} ${skipped===1?'question':'questions'}; reopen the module to answer ${skipped===1?'it':'them'}.`:''}</p>
     <div class="tiles" style="width:100%">
       <div class="tile"><b>${ok}/${n}</b><span>Correct</span></div>
       <div class="tile"><b>+${gain}</b><span>XP earned${bonus?', incl. completion bonus':''}</span></div>
